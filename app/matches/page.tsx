@@ -26,15 +26,60 @@ export default async function MatchesDashboard() {
                 <header className="mb-12">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold mb-4">
                         <Zap className="w-4 h-4" />
-                        ESTADÍSTICAS
+                        ANÁLISIS DE DATOS
                     </div>
                     <h2 className="text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                        Panel de Conexiones
+                        Dashboard de Conexiones
                     </h2>
                     <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-lg max-w-2xl">
-                        Rastrea la interacción y actividad de networking por cada contacto generado mediante QR.
+                        Métricas avanzadas y actividad de networking en tiempo real.
                     </p>
                 </header>
+
+                {/* Resumen Ejecutivo (Gold Data) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">Total Conexiones</p>
+                        <div className="flex items-end gap-2">
+                            <span className="text-4xl font-black text-indigo-600">
+                                {report.reduce((acc, user) => acc + user.matches.length, 0)}
+                            </span>
+                            <span className="text-zinc-400 mb-1 font-medium">escaneos totales</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">Tasa de Identidad</p>
+                        <div className="flex items-end gap-2">
+                            <span className="text-4xl font-black text-emerald-600">
+                                {(() => {
+                                    const total = report.reduce((acc, user) => acc + user.matches.length, 0);
+                                    const identified = report.reduce((acc, user) => acc + user.matches.filter(m => m.scanner_id).length, 0);
+                                    return total > 0 ? Math.round((identified / total) * 100) : 0;
+                                })()}%
+                            </span>
+                            <span className="text-zinc-400 mb-1 font-medium">usuarios conocidos</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">Hora Pico</p>
+                        <div className="flex items-end gap-2">
+                            <span className="text-4xl font-black text-amber-500">
+                                {(() => {
+                                    const hours: { [key: number]: number } = {};
+                                    report.forEach(u => u.matches.forEach(m => {
+                                        const h = new Date(m.created_at).getHours();
+                                        hours[h] = (hours[h] || 0) + 1;
+                                    }));
+                                    const peak = Object.entries(hours).sort((a, b) => b[1] - a[1])[0];
+                                    return peak ? `${peak[0]}:00` : '--';
+                                })()}
+                            </span>
+                            <span className="text-zinc-400 mb-1 font-medium">máximo flujo</span>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 gap-8">
                     <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
@@ -58,8 +103,8 @@ export default async function MatchesDashboard() {
                                             </td>
                                             <td className="px-6 py-6 text-center w-1/4">
                                                 <span className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl font-bold text-xl ${user.matches.length > 0
-                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                                                        : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                                    : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800'
                                                     }`}>
                                                     {user.matches.length}
                                                 </span>
