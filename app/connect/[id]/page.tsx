@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { supabase } from '@/lib/supabase'
-import { registerMatch } from '@/app/actions/contacts'
+import { registerMatch, getContactById } from '@/app/actions/contacts'
 import { MessageSquare, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -17,11 +16,8 @@ export default function ConnectPage({ params }: Props) {
 
     useEffect(() => {
         const init = async () => {
-            const { data } = await supabase
-                .from('contacts')
-                .select('name, phone')
-                .eq('id', id)
-                .single()
+            // ✅ Fix: Using Server Action instead of direct DB access
+            const data = await getContactById(id);
 
             setContact(data)
             setLoading(false)

@@ -1,9 +1,13 @@
 'use server'
 
-import { supabase } from '@/lib/supabase'
+import { contactService } from '@/lib/services/contactService'
 import ExcelJS from 'exceljs'
 import { revalidatePath } from 'next/cache'
 
+/**
+ * Handles bulk upload of contacts from an Excel file.
+ * Following Server Action pattern for secure processing.
+ */
 export async function uploadContacts(formData: FormData) {
     const file = formData.get('file') as File
     if (!file) {
@@ -18,16 +22,14 @@ export async function uploadContacts(formData: FormData) {
         const worksheet = workbook.worksheets[0]
         const contacts: any[] = []
 
-        // Obtener las cabeceras de la primera fila
         const headerRow = worksheet.getRow(1)
         const headers: { [key: number]: string } = {}
         headerRow.eachCell((cell, colNumber) => {
             headers[colNumber] = String(cell.value || '').toLowerCase().trim()
         })
 
-        // Procesar las filas (empezando desde la 2)
         worksheet.eachRow((row, rowNumber) => {
-            if (rowNumber === 1) return // Saltar cabecera
+            if (rowNumber === 1) return
 
             const contact: any = {}
             row.eachCell((cell, colNumber) => {
@@ -50,14 +52,7 @@ export async function uploadContacts(formData: FormData) {
             throw new Error('No se encontraron contactos válidos en el archivo')
         }
 
-        const { error } = await supabase
-            .from('contacts')
-            .insert(contacts)
-
-        if (error) {
-            console.error('Error inserting contacts:', error)
-            throw new Error('Error al guardar los contactos en Supabase')
-        }
+        await contactService.insertMany(contacts)
 
         revalidatePath('/')
         return { success: true, count: contacts.length }
@@ -67,71 +62,64 @@ export async function uploadContacts(formData: FormData) {
     }
 }
 
+/**
+ * Retrieves all contacts.
+ */
 export async function getContacts() {
-    const { data, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-    if (error) {
+    try {
+        return await contactService.getAll()
+    } catch (error) {
         console.error('Error fetching contacts:', error)
         return []
     }
-
-    return data || []
 }
 
-export async function registerMatch(contactId: string, scannerId?: string) {
-    const { error } = await supabase
-        .from('matches')
-        .insert([{
-            contact_id: contactId,
-            scanner_id: scannerId || null
-        }])
+/**
+ * Retrieves a contact by its ID.
+ * This is used to replace direct client-side calls.
+ */
+export async function getContactById(id: string) {
+    try {
+        return await contactService.getById(id)
+    } catch (error) {
+        console.error(`Error fetching contact ${id}:`, error)
+        return null
+    }
+}
 
-    if (error) {
+/**
+ * Registers a match between two contacts.
+ */
+export async function registerMatch(contactId: string, scannerId?: string) {
+    try {
+        await contactService.registerMatch(contactId, scannerId)
+        return { success: true }
+    } catch (error) {
         console.error('Error registering match:', error)
         return { success: false }
     }
-
-    return { success: true }
 }
 
+/**
+ * Finds a contact by email or phone.
+ */
 export async function findContactByIdentifier(identifier: string) {
-    const { data, error } = await supabase
-        .from('contacts')
-        .select('id, name')
-        .or(`email.eq.${identifier},phone.eq.${identifier}`)
-        .maybeSingle()
-
-    if (error) return null
-    return data
+    try {
+        return await contactService.getByIdentifier(identifier)
+    } catch (error) {
+        console.error('Error finding contact:', error)
+        return null
+    }
 }
 
+/**
+ * Generates a full report of matches for the dashboard.
+ */
 export async function getMatchesReport() {
-    const { data, error } = await supabase
-        .from('contacts')
-        .select(`
-      id,
-      name,
-      email,
-      phone,
-      matches:matches!matches_contact_id_fkey (
-        id,
-        created_at,
-        scanner_id,
-        scanner:contacts!matches_scanner_id_fkey (
-          id,
-          name
-        )
-      )
-    `)
-        .order('name', { ascending: true })
-
-    if (error) {
+    try {
+        return await contactService.getMatchesReport()
+    } catch (error) {
         console.error('Error getting matches report:', error)
         return []
     }
-
-    return data || []
 }

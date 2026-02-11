@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { findContactByIdentifier } from '@/app/actions/contacts'
+import { findContactByIdentifier, getContactById } from '@/app/actions/contacts'
 import { User, LogOut, Loader2, Smartphone } from 'lucide-react'
 
 export default function IdentityStatus() {
@@ -15,11 +14,8 @@ export default function IdentityStatus() {
     const checkIdentity = async () => {
         const savedId = localStorage.getItem('connectify_user_id')
         if (savedId) {
-            const { data } = await supabase
-                .from('contacts')
-                .select('id, name')
-                .eq('id', savedId)
-                .single()
+            // ✅ Fix: Using Server Action instead of direct DB access
+            const data = await getContactById(savedId);
 
             if (data) setUser(data)
             else localStorage.removeItem('connectify_user_id')
