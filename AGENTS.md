@@ -13,17 +13,19 @@ Use these skills for detailed patterns on-demand:
 ### Generic Skills
 | Skill | Description | URL |
 |-------|-------------|-----|
-| `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
-| `react-19` | No useMemo/useCallback, Server Components | [SKILL.md](skills/react-19/SKILL.md) |
-| `nextjs` | App Router, Server Actions, Streaming | [SKILL.md](skills/nextjs/SKILL.md) |
-| `tailwind-4` | cn() utility, CSS variables, Glassmorphism | [SKILL.md](skills/tailwind-4/SKILL.md) |
-| `supabase` | Client patterns, RLS, Type safety | [SKILL.md](skills/supabase/SKILL.md) |
+| `typescript` | Const types, flat interfaces, utility types | [SKILL.md](.agent/skills/typescript/SKILL.md) |
+| `react-19` | No useMemo/useCallback, Server Components | [SKILL.md](.agent/skills/react-19/SKILL.md) |
+| `nextjs` | App Router, Server Actions, Streaming | [SKILL.md](.agent/skills/nextjs/SKILL.md) |
+| `tailwind-4` | cn() utility, CSS variables, Glassmorphism | [SKILL.md](.agent/skills/tailwind-4/SKILL.md) |
+| `supabase` | Client patterns, RLS, Type safety | [SKILL.md](.agent/skills/supabase/SKILL.md) |
+| `supabase-postgres-best-practices` | Postgres performance optimization and best practices from Supabase | [SKILL.md](.agent/skills/supabase-postgres-best-practices/SKILL.md) |
+| `vercel-react-best-practices` | Vercel Engineering's React & Next.js performance patterns | [SKILL.md](.agent/skills/vercel-react-best-practices/SKILL.md) |
 
 ### Connectify-Specific Skills
 | Skill | Description | URL |
 |-------|-------------|-----|
-| `connectify` | Project overview, component navigation | [SKILL.md](skills/connectify/SKILL.md) |
-| `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
+| `connectify` | Project overview, component navigation | [SKILL.md](.agent/skills/connectify/SKILL.md) |
+| `skill-creator` | Create new AI agent skills | [SKILL.md](.agent/skills/skill-creator/SKILL.md) |
 
 ---
 
@@ -33,7 +35,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 | Action | Skill |
 |--------|-------|
-| Adding or modifying database schemas | `supabase` |
+| Adding or modifying database schemas | `supabase`, `supabase-postgres-best-practices` |
 | App Router / Server Actions | `nextjs` |
 | Committing changes | `connectify` |
 | Creating reusable UI components | `tailwind-4` |
@@ -42,6 +44,8 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Working with Tailwind classes | `tailwind-4` |
 | Writing TypeScript types/interfaces | `typescript` |
 | Building networking features (Matches/QR) | `connectify` |
+| Refactoring React components or optimizing performance | `vercel-react-best-practices` |
+| Optimizing SQL queries or Postgres configuration | `supabase-postgres-best-practices` |
 
 ---
 
