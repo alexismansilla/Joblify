@@ -41,10 +41,21 @@ export const contactService = {
         return data;
     },
 
+    async getByEmail(email: string) {
+        const { data, error } = await supabase
+            .from('contacts')
+            .select('id, name, email, phone')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    },
+
     async getByIdentifier(identifier: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name')
+            .select('id, name, email, phone')
             .or(`email.eq.${identifier},phone.eq.${identifier}`)
             .maybeSingle();
 

@@ -113,6 +113,18 @@ export async function findContactByIdentifier(identifier: string) {
 }
 
 /**
+ * Finds a contact by its email.
+ */
+export async function findContactByEmail(email: string) {
+    try {
+        return await contactService.getByEmail(email)
+    } catch (error) {
+        console.error('Error finding contact by email:', error)
+        return null
+    }
+}
+
+/**
  * Generates a full report of matches for the dashboard.
  */
 export async function getMatchesReport() {
