@@ -5,6 +5,7 @@ export interface Contact {
     name: string;
     email: string | null;
     phone: string | null;
+    rut: string | null;
     created_at?: string;
 }
 
@@ -33,7 +34,7 @@ export const contactService = {
     async getById(id: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, email, phone')
+            .select('id, name, email, phone, rut')
             .eq('id', id)
             .maybeSingle();
 
@@ -44,7 +45,7 @@ export const contactService = {
     async getByEmail(email: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, email, phone')
+            .select('id, name, email, phone, rut')
             .eq('email', email)
             .maybeSingle();
 
@@ -53,10 +54,16 @@ export const contactService = {
     },
 
     async getByIdentifier(identifier: string) {
+        // Limpiamos la entrada para que pueda comparar independientemente de puntos o guiones
+        const cleanIdentifier = identifier.replace(/[^0-9kK]/g, '').toUpperCase();
+        const formattedIdentifier = cleanIdentifier.length > 1
+            ? `${cleanIdentifier.slice(0, -1)}-${cleanIdentifier.slice(-1)}`
+            : cleanIdentifier;
+
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, email, phone')
-            .or(`email.eq.${identifier},phone.eq.${identifier}`)
+            .select('id, name, email, phone, rut')
+            .or(`email.eq.${identifier},phone.eq.${identifier},rut.eq.${identifier},rut.eq.${cleanIdentifier},rut.eq.${formattedIdentifier}`)
             .maybeSingle();
 
         if (error) throw error;
@@ -94,6 +101,7 @@ export const contactService = {
         name,
         email,
         phone,
+        rut,
         matches:matches!matches_contact_id_fkey (
           id,
           created_at,

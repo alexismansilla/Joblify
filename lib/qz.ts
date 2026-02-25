@@ -35,6 +35,7 @@ export async function printToQZ(qrBase64: string, printerName: string = 'QZ Tray
             }
         ]
 
+        // @ts-ignore
         await qz.print(config, data)
         console.log('QZ Tray: Print command sent successfully')
         alert('Comando de impresión enviado con éxito a: ' + selectedPrinter)

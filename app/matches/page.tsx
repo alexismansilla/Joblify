@@ -9,9 +9,9 @@ export default async function MatchesDashboard() {
         <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans pb-20">
             <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-black/50 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
+                    <Link href="/admin" className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
                         <ArrowLeft className="w-5 h-5" />
-                        <span className="font-medium">Volver al Inicio</span>
+                        <span className="font-medium">Volver a Administración</span>
                     </Link>
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
