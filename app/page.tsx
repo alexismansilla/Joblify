@@ -46,7 +46,9 @@ export default function CheckIn() {
             const result = await findContactByIdentifier(identifier.trim())
             if (result) {
                 setContact(result)
-                const connectUrl = `${window.location.origin}/connect/${result.id}`
+                const targetPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUM_BUSINESS?.replace(/\D/g, '') || ''
+                const msg = encodeURIComponent(`Hola! Conecté con @${result.qr_token}:${result.id}`)
+                const connectUrl = `https://wa.me/${targetPhone}?text=${msg}`
                 const qrDataUrl = await QRCode.toDataURL(connectUrl, {
                     width: 512,
                     margin: 1,
@@ -228,7 +230,7 @@ export default function CheckIn() {
                                         {contact?.name}
                                     </h3>
                                     <p className="text-xs font-bold uppercase tracking-widest mt-3 opacity-60">
-                                        CONNECTIFY
+                                        {contact?.company || 'CONNECTIFY'}
                                     </p>
                                 </div>
 
@@ -296,7 +298,7 @@ export default function CheckIn() {
                         {contact?.name}
                     </h2>
                     <p style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, margin: '10px 0 0 0' }}>
-                        CONNECTIFY
+                        {contact?.company || 'CONNECTIFY'}
                     </p>
 
                     <div style={{ marginTop: '20px', borderTop: '2px solid rgba(0,0,0,0.1)', borderBottom: '2px solid rgba(0,0,0,0.1)', padding: '20px 0' }}>

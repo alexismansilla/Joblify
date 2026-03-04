@@ -6,6 +6,8 @@ export interface Contact {
     email: string | null;
     phone: string | null;
     rut: string | null;
+    company: string | null;
+    qr_token: string | null;
     created_at?: string;
 }
 
@@ -34,7 +36,7 @@ export const contactService = {
     async getById(id: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, email, phone, rut')
+            .select('id, name, email, phone, rut, company, qr_token')
             .eq('id', id)
             .maybeSingle();
 
@@ -45,7 +47,7 @@ export const contactService = {
     async getByEmail(email: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, email, phone, rut')
+            .select('id, name, email, phone, rut, company, qr_token')
             .eq('email', email)
             .maybeSingle();
 
@@ -62,7 +64,7 @@ export const contactService = {
 
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, email, phone, rut')
+            .select('id, name, email, phone, rut, company, qr_token')
             .or(`email.eq.${identifier},phone.eq.${identifier},rut.eq.${identifier},rut.eq.${cleanIdentifier},rut.eq.${formattedIdentifier}`)
             .maybeSingle();
 
@@ -93,6 +95,37 @@ export const contactService = {
         return data;
     },
 
+    async registerWhatsappMatch(contactId: string, scannerId: string | null, scannerPhone: string) {
+        const { data, error } = await supabase
+            .from('matches')
+            .insert([{
+                contact_id: contactId,
+                scanner_id: scannerId,
+                scanner_phone: scannerPhone
+            }])
+            .select();
+
+        if (error) {
+            console.error('Error in registerWhatsappMatch', error)
+            return null;
+        }
+        return data;
+    },
+
+    async updateMatchConnectionType(matchId: string, connectionType: string) {
+        const { data, error } = await supabase
+            .from('matches')
+            .update({ connection_type: connectionType })
+            .eq('id', matchId)
+            .select();
+
+        if (error) {
+            console.error('Error in updateMatchConnectionType', error)
+            return null;
+        }
+        return data;
+    },
+
     async getMatchesReport() {
         const { data, error } = await supabase
             .from('contacts')
@@ -102,6 +135,8 @@ export const contactService = {
         email,
         phone,
         rut,
+        company,
+        qr_token,
         matches:matches!matches_contact_id_fkey (
           id,
           created_at,

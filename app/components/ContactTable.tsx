@@ -12,6 +12,7 @@ interface Contact {
     name: string
     email: string | null
     phone: string | null
+    qr_token?: string | null
     created_at?: string
 }
 
@@ -21,8 +22,10 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
     const handlePrint = async (contact: Contact) => {
         setLoadingId(contact.id)
         try {
-            // El QR ahora apunta a nuestra ruta interna para registrar el "match" antes de ir a WhatsApp
-            const connectLink = `${window.location.origin}/connect/${contact.id}`
+            // El QR apunta a WhatsApp del bot
+            const targetPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUM_BUSINESS?.replace(/\D/g, '') || ''
+            const msg = encodeURIComponent(`Hola! Conecté con @${contact.qr_token}:${contact.id}`)
+            const connectLink = `https://wa.me/${targetPhone}?text=${msg}`
 
             const qrBase64 = await QRCode.toDataURL(connectLink, {
                 scale: 10,

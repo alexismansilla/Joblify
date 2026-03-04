@@ -38,6 +38,7 @@ export async function uploadContacts(formData: FormData) {
                 if (header === 'email' || header === 'correo') contact.email = String(cell.value || '')
                 if (header === 'phone' || header === 'teléfono' || header === 'telefono') contact.phone = String(cell.value || '')
                 if (header === 'rut') contact.rut = String(cell.value || '').trim()
+                if (header === 'company' || header === 'empresa' || header === 'organización' || header === 'organizacion') contact.company = String(cell.value || '').trim()
             })
 
             if (contact.name) {
@@ -46,6 +47,7 @@ export async function uploadContacts(formData: FormData) {
                     email: contact.email || '',
                     phone: String(contact.phone || ''),
                     rut: contact.rut ? String(contact.rut) : null,
+                    company: contact.company ? String(contact.company) : null,
                 })
             }
         })
