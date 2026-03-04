@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import { printToQZ } from '@/lib/qz'
-import { QrCode, Mail, Phone, User, Printer } from 'lucide-react'
+import { QrCode, Mail, User, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface Contact {
@@ -18,6 +18,29 @@ interface Contact {
 
 export default function ContactTable({ contacts }: { contacts: Contact[] }) {
     const [loadingId, setLoadingId] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 50
+
+    const filteredContacts = useMemo(() => {
+        const query = searchQuery.toLowerCase()
+        return contacts.filter(contact =>
+            contact.name.toLowerCase().includes(query) ||
+            (contact.email && contact.email.toLowerCase().includes(query)) ||
+            (contact.phone && contact.phone.toLowerCase().includes(query))
+        )
+    }, [contacts, searchQuery])
+
+    const totalPages = Math.ceil(filteredContacts.length / itemsPerPage)
+    const currentContacts = filteredContacts.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    )
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value)
+        setCurrentPage(1)
+    }
 
     const handlePrint = async (contact: Contact) => {
         setLoadingId(contact.id)
@@ -101,67 +124,117 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
     }
 
     return (
-        <div className="w-full overflow-hidden rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
-                            <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wider">Nombre</th>
-                            <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wider">Teléfono</th>
-                            <th className="px-6 py-4 text-sm font-semibold uppercase tracking-wider text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                        {contacts.map((contact, index) => (
-                            <motion.tr
-                                key={contact.id || `contact-${index}`}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors"
-                            >
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-medium text-zinc-900 dark:text-zinc-100">{contact.name}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                                        <Mail className="w-4 h-4" />
-                                        <span>{contact.email || '—'}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 font-mono">
-                                        <Phone className="w-4 h-4" />
-                                        <span>{contact.phone || '—'}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <button
-                                        onClick={() => handlePrint(contact)}
-                                        disabled={loadingId === contact.id}
-                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white transition-all disabled:opacity-50 font-medium active:scale-95"
-                                    >
-                                        {loadingId === contact.id ? (
-                                            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                                        ) : (
-                                            <>
-                                                <QrCode className="w-4 h-4" />
-                                                <span>Imprimir QR</span>
-                                            </>
-                                        )}
-                                    </button>
-                                </td>
-                            </motion.tr>
-                        ))}
-                    </tbody>
-                </table>
+        <div className="w-full flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="relative w-full md:max-w-md">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none opacity-50">
+                        <Search className="h-5 w-5" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="BUSCAR NOMBRE, EMAIL O RUT..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 pl-12 pr-4 font-mono text-sm tracking-widest uppercase transition-colors placeholder:opacity-30 rounded-none"
+                    />
+                </div>
+
+                <div className="font-mono text-[10px] font-bold tracking-widest uppercase opacity-50">
+                    MOSTRANDO {currentContacts.length} DE {filteredContacts.length} ENTIDADES
+                </div>
             </div>
+
+            <div className="w-full border-t border-black/10 dark:border-white/10">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr className="border-b border-black/10 dark:border-white/10">
+                                <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50"># Identificador</th>
+                                <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50">Contacto Activo</th>
+                                <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50">Email DB</th>
+                                <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50 text-right">Acción Prensado</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                            {currentContacts.length > 0 ? (
+                                currentContacts.map((contact, index) => (
+                                    <motion.tr
+                                        key={contact.id || `contact-${index}`}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: (index % itemsPerPage) * 0.02 }}
+                                        className="group hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                                    >
+                                        <td className="px-6 py-6">
+                                            <div className="font-mono text-xs opacity-60">
+                                                ID-{contact.id.split('-')[0].toUpperCase()}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-8 h-8 rounded-none border border-black/10 dark:border-white/10 flex items-center justify-center group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-colors duration-300">
+                                                    <User className="w-4 h-4" />
+                                                </div>
+                                                <span className="font-black tracking-tight text-lg uppercase">{contact.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-6">
+                                            <div className="flex items-center gap-3 font-mono text-sm opacity-60">
+                                                <Mail className="w-4 h-4" />
+                                                <span className="truncate max-w-[200px]">{contact.email || contact.phone || 'N/A'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-6 text-right">
+                                            <button
+                                                onClick={() => handlePrint(contact)}
+                                                disabled={loadingId === contact.id}
+                                                className="inline-flex items-center gap-3 px-6 py-3 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed group-hover:scale-[1.02] active:scale-95 border-none rounded-none"
+                                            >
+                                                {loadingId === contact.id ? (
+                                                    <div className="animate-spin h-4 w-4 border-2 border-white dark:border-black border-t-transparent rounded-full" />
+                                                ) : (
+                                                    <>
+                                                        <QrCode className="w-4 h-4" />
+                                                        <span className="font-mono text-[10px] font-bold tracking-widest uppercase">Generar</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </td>
+                                    </motion.tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-12 text-center text-xs font-mono tracking-widest uppercase opacity-40">
+                                        NO SE ENCONTRARON RESULTADOS
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-6 border-t border-black/10 dark:border-white/10">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="inline-flex items-center gap-2 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 border border-transparent disabled:opacity-20 disabled:hover:bg-transparent transition-colors font-mono text-[10px] font-bold tracking-widest uppercase"
+                    >
+                        <ChevronLeft className="w-4 h-4" /> Anterior
+                    </button>
+                    <span className="font-mono text-[10px] tracking-widest uppercase opacity-50">
+                        PÁG {currentPage} DE {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="inline-flex items-center gap-2 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 border border-transparent disabled:opacity-20 disabled:hover:bg-transparent transition-colors font-mono text-[10px] font-bold tracking-widest uppercase"
+                    >
+                        Siguiente <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

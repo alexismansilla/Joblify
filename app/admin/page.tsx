@@ -1,65 +1,70 @@
 import { getContacts } from '@/app/actions/contacts'
 import FileUpload from '@/app/components/FileUpload'
 import ContactTable from '@/app/components/ContactTable'
-import IdentityStatus from '@/app/components/IdentityStatus'
-import { Users, LayoutGrid } from 'lucide-react'
+import { Users, LayoutGrid, Activity } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function Home() {
   const contacts = await getContacts()
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans">
-      <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-black/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">C</span>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Connectify</h1>
+    <div className="min-h-screen bg-white dark:bg-[#050505] text-black dark:text-white font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black relative">
+      {/* Minimalist Grid Pattern Background */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-difference bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:4rem_4rem] -z-10"></div>
+
+      <nav className="fixed top-0 inset-x-0 h-20 border-b border-black/10 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md z-50 transition-colors">
+        <div className="max-w-[1400px] mx-auto px-8 h-full flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col">
+              Connectify<span className="text-[10px] font-mono tracking-widest opacity-50">ADMIN DASHBOARD</span>
+            </h1>
           </div>
-          <Link
-            href="/matches"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium hover:bg-indigo-600 hover:text-white transition-all group"
-          >
-            <LayoutGrid className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span>Estadísticas de Matches</span>
-          </Link>
-          <IdentityStatus />
+          <div className="flex items-center gap-6">
+            <Link
+              href="/matches"
+              className="hidden md:flex items-center gap-2 group hover:opacity-50 transition-opacity"
+            >
+              <Activity className="w-4 h-4" />
+              <span className="font-mono text-xs font-bold tracking-widest uppercase">Métricas</span>
+            </Link>
+          </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <header className="mb-12">
-          <h2 className="text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-            Gestión de Contactos
-          </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-lg max-w-2xl">
-            Sube tu lista de contactos en formato Excel, genera códigos QR únicos y envíalos directamente a tu impresora térmica.
-          </p>
-        </header>
-
-        <section className="mb-16">
-          <FileUpload />
+      <main className="max-w-[1400px] mx-auto px-8 pt-28 pb-24 relative overflow-hidden">
+        <section className="mb-12 relative z-10 flex flex-col md:flex-row gap-8">
+          <div className="flex-1">
+            <FileUpload />
+          </div>
         </section>
 
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Users className="w-6 h-6 text-indigo-600" />
-              <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">Registros Cargados</h3>
+        <section className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-6 border-b border-black/10 dark:border-white/10 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col">
+                <h3 className="text-3xl font-black tracking-tighter uppercase">Asistentes Registrados</h3>
+                <p className="font-mono text-[10px] tracking-widest uppercase opacity-50 mt-1 flex items-center gap-2">
+                  <Users className="w-3 h-3" /> Base de Datos Actual
+                </p>
+              </div>
             </div>
-            <span className="bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              {contacts.length} registros
-            </span>
+            <div className="flex flex-col items-start md:items-end">
+              <span className="text-5xl font-black leading-none tracking-tighter">
+                {contacts.length}
+              </span>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Total Entidades</span>
+            </div>
           </div>
 
           {contacts.length > 0 ? (
             <ContactTable contacts={contacts} />
           ) : (
-            <div className="border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center bg-white dark:bg-zinc-900/50">
-              <LayoutGrid className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-500 dark:text-zinc-400">No hay registros aún. Sube un archivo Excel para comenzar.</p>
+            <div className="border border-dashed border-black/20 dark:border-white/20 p-16 text-center bg-transparent backdrop-blur-sm">
+              <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mx-auto mb-6">
+                <Users className="w-8 h-8 opacity-40" />
+              </div>
+              <p className="font-black text-xl uppercase tracking-tighter">SIN DATOS CARGADOS</p>
+              <p className="font-mono text-xs mt-2 uppercase tracking-widest opacity-50">Sube un archivo para comenzar</p>
             </div>
           )}
         </section>

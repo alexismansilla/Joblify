@@ -141,6 +141,7 @@ export const contactService = {
           id,
           created_at,
           scanner_id,
+          connection_type,
           scanner:contacts!matches_scanner_id_fkey (
             id,
             name

@@ -56,40 +56,50 @@ export default function IdentityStatus() {
             <>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-sm font-medium border border-amber-100 dark:border-amber-900/30 hover:bg-amber-100 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-colors font-mono text-[10px] uppercase font-bold tracking-widest"
                 >
                     <User className="w-4 h-4" />
-                    <span>Configurar Mi Perfil</span>
+                    <span>Enlazar Identidad</span>
                 </button>
 
                 {isModalOpen && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-                        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-zinc-200 dark:border-zinc-800">
-                            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mb-6 text-indigo-600">
-                                <Smartphone className="w-6 h-6" />
-                            </div>
-                            <h2 className="text-xl font-bold mb-2">Identifícate</h2>
-                            <p className="text-sm text-zinc-500 mb-6">Ingresa tu correo o teléfono para que la app sepa que eres tú el scanner.</p>
+                    <div className="fixed inset-0 bg-white/90 dark:bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                        <div className="bg-white dark:bg-[#050505] p-10 md:p-16 max-w-md w-full border border-black/10 dark:border-white/10 relative overflow-hidden text-black dark:text-white">
+                            <h2 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter mb-2 leading-none">Acreditación<br />Manual</h2>
+                            <p className="font-mono text-[10px] uppercase tracking-widest opacity-50 mb-12">Portal de Identificación para impresión de Credenciales.</p>
 
-                            <form onSubmit={handleLogin} className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder="Email o Teléfono"
-                                    autoFocus
-                                    className="w-full px-5 py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-indigo-500"
-                                    value={identifier}
-                                    onChange={(e) => setIdentifier(e.target.value)}
-                                    required
-                                />
-                                <div className="flex gap-3">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-zinc-500 font-medium">Cancelar</button>
+                            <form onSubmit={handleLogin} className="space-y-8">
+                                <div className="space-y-4">
+                                    <label className="block text-[10px] font-mono tracking-widest uppercase opacity-60">
+                                        01 // DATA O TELEMETRÍA (EMAIL/PHONE)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: 912345678"
+                                        autoFocus
+                                        className="w-full bg-transparent border-b-2 border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 text-3xl font-black tracking-tight transition-colors placeholder:opacity-20 rounded-none uppercase"
+                                        value={identifier}
+                                        onChange={(e) => setIdentifier(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-4">
                                     <button
                                         type="submit"
                                         disabled={checking}
-                                        className="flex-[2] py-3 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                                        className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-mono text-xs uppercase font-bold tracking-widest flex items-center justify-between hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed group transition-all duration-300"
                                     >
-                                        {checking && <Loader2 className="w-4 h-4 animate-spin" />}
-                                        Confirmar
+                                        <span className="flex-1 text-center">
+                                            {checking ? 'VERIFICANDO...' : 'AUTORIZAR ACCESO'}
+                                        </span>
+                                        {checking && <Loader2 className="w-4 h-4 mr-4 animate-spin absolute right-0" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="w-full py-4 bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white font-mono text-[10px] font-bold uppercase tracking-widest hover:opacity-50 transition-opacity"
+                                    >
+                                        ABORTAR
                                     </button>
                                 </div>
                             </form>
@@ -101,14 +111,21 @@ export default function IdentityStatus() {
     }
 
     return (
-        <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800/50 px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-            <div className="flex flex-col items-end leading-tight">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Identidad Activa</span>
-                <span className="text-sm font-bold text-zinc-900 dark:text-white">{user.name}</span>
+        <div className="flex items-center gap-4 border border-black/10 dark:border-white/10 px-4 py-2 bg-black/5 dark:bg-white/5">
+            <div className="flex items-center gap-3">
+                <div className="w-1.5 h-1.5 bg-black dark:bg-white animate-pulse"></div>
+                <div className="flex flex-col items-start leading-[1.1]">
+                    <span className="text-[9px] font-mono uppercase font-bold tracking-[0.2em] opacity-50 mb-0.5">Operador Activo</span>
+                    <span className="text-xs font-black uppercase tracking-tighter truncate max-w-[120px]">{user.name}</span>
+                </div>
             </div>
+
+            <div className="w-px h-6 bg-black/10 dark:bg-white/10 mx-1"></div>
+
             <button
                 onClick={logout}
-                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors bg-white dark:bg-zinc-900 rounded-lg shadow-sm"
+                className="p-1.5 opacity-40 hover:opacity-100 transition-opacity"
+                title="Desconectar"
             >
                 <LogOut className="w-4 h-4" />
             </button>
