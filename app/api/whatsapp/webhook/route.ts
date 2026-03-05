@@ -128,17 +128,8 @@ async function processButtonReply(scannerPhone: string, buttonId: string) {
     const targetContact = await contactService.getById(matchResult[0].contact_id)
 
     if (targetContact?.phone) {
-        // Limpiamos el teléfono para el link wa.me (solo dígitos)
-        const cleanPhone = targetContact.phone.replace(/\D/g, '')
-        const waLink = `https://wa.me/${cleanPhone}`
-
-        // 3. Enviamos los datos del contacto ANTES del mensaje de confirmación
-        const contactInfoMessage =
-            `👤 *${targetContact.name}*\n` +
-            `${targetContact.company ? `🏢 ${targetContact.company}\n` : ''}` +
-            `📱 Chatea directamente:\n${waLink}`
-
-        await whatsappService.sendTextMessage(scannerPhone, contactInfoMessage)
+        // 3. Enviamos una Contact Card nativa de WhatsApp (foto de perfil + botones Mensaje/Añadir)
+        await whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone)
     }
 
     // 4. Confirmación final

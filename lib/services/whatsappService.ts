@@ -1,3 +1,14 @@
+/**
+ * Normaliza un teléfono chileno al formato internacional E.164: +569XXXXXXXX
+ * Acepta: "56938997919", "938997919", "+56938997919", "9 3899 7919", etc.
+ */
+function normalizeChileanPhone(rawPhone: string): string {
+    const digitsOnly = rawPhone.replace(/\D/g, '')
+    if (digitsOnly.startsWith('56')) return `+${digitsOnly}`
+    if (digitsOnly.startsWith('9') && digitsOnly.length === 9) return `+56${digitsOnly}`
+    return `+${digitsOnly}`
+}
+
 export const whatsappService = {
     async sendInteractiveProfileMessage(toPhone: string, contact: any, matchId: string) {
         const token = process.env.WHATSAPP_ACCESS_TOKEN
@@ -102,5 +113,69 @@ export const whatsappService = {
         } catch (error) {
             console.error('Failed to send WhatsApp message', error)
         }
+    },
+
+    /**
+     * Envía una Contact Card nativa de WhatsApp.
+     * Renderiza la foto de perfil del contacto, su nombre y los botones
+     * "Mensaje" y "Añadir a un grupo" — igual al screenshot.
+     */
+    async sendContactCard(toPhone: string, contactName: string, contactPhone: string) {
+        const token = process.env.WHATSAPP_ACCESS_TOKEN
+        const phoneId = process.env.WHATSAPP_PHONE_ID
+
+        if (!token || !phoneId) return
+
+        const endpoint = `https://graph.facebook.com/v18.0/${phoneId}/messages`
+
+        // Normalizamos el teléfono del contacto al formato E.164 (+569XXXXXXXX)
+        const formattedPhone = normalizeChileanPhone(contactPhone)
+        // wa_id no lleva el + (solo dígitos)
+        const waId = formattedPhone.replace('+', '')
+
+        // Separamos nombre en first/last para el vCard
+        const nameParts = contactName.trim().split(' ')
+        const firstName = nameParts[0]
+        const lastName = nameParts.slice(1).join(' ')
+
+        const payload = {
+            messaging_product: "whatsapp",
+            to: toPhone,
+            type: "contacts",
+            contacts: [
+                {
+                    name: {
+                        formatted_name: contactName,
+                        first_name: firstName,
+                        last_name: lastName
+                    },
+                    phones: [
+                        {
+                            phone: formattedPhone,
+                            type: "CELL",
+                            wa_id: waId
+                        }
+                    ]
+                }
+            ]
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            })
+            const data = await response.json()
+            if (!response.ok) {
+                console.error('Error sending contact card:', data)
+            }
+        } catch (error) {
+            console.error('Failed to send contact card', error)
+        }
     }
 }
+
