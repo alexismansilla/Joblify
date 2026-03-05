@@ -47,7 +47,7 @@ export default function CheckIn() {
             if (result) {
                 setContact(result)
                 const targetPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUM_BUSINESS?.replace(/\D/g, '') || ''
-                const msg = encodeURIComponent(`Hola! Conecté con @${result.qr_token}:${result.id}`)
+                const msg = encodeURIComponent(`Hola! Conecté con @${result.qr_token}`)
                 const connectUrl = `https://wa.me/${targetPhone}?text=${msg}`
                 const qrDataUrl = await QRCode.toDataURL(connectUrl, {
                     width: 512,

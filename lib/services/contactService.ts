@@ -44,6 +44,18 @@ export const contactService = {
         return data;
     },
 
+    async getByQrToken(qrToken: string) {
+        const { data, error } = await supabase
+            .from('contacts')
+            .select('id, name, email, phone, rut, company, qr_token')
+            .eq('qr_token', qrToken)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    },
+
+
     async getByEmail(email: string) {
         const { data, error } = await supabase
             .from('contacts')

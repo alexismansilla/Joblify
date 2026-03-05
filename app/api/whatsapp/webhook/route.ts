@@ -69,40 +69,38 @@ export async function POST(request: Request) {
 }
 
 async function processConnection(scannerPhone: string, text: string) {
-    // Regex para extraer el qr_token y el contact_id (@TOKEN:ID)
-    const match = text.match(/@([\w-]+):([a-zA-Z0-9-]+)/)
+    // Regex para extraer solo el qr_token del mensaje: @XXXXXXXXXX
+    const match = text.match(/@([A-Z0-9]{8,10})/)
 
     if (!match) return
 
     const qrToken = match[1]
-    const contactId = match[2]
 
-    console.log(`Buscando contacto con ID: ${contactId}`)
+    console.log(`Buscando contacto con qr_token: ${qrToken}`)
 
-    // 1. Buscamos al asistente destino en la DB
-    const targetContact = await contactService.getById(contactId)
+    // 1. Buscamos al asistente destino por su qr_token
+    const targetContact = await contactService.getByQrToken(qrToken)
 
     if (!targetContact) {
-        console.error('Contacto destino no encontrado')
+        console.error('Contacto destino no encontrado para qr_token:', qrToken)
         return
     }
 
-    // 2. Registramos el match temporal con el teléfono del escáner
-    let scannerContact = await contactService.getByIdentifier(scannerPhone)
+    // 2. Buscamos si el escáner ya está registrado en la DB
+    const scannerContact = await contactService.getByIdentifier(scannerPhone)
 
-    // Lo guardamos en matches. 
-    // Como hemos modificado la tabla para soportar scanner_phone, lo pasaremos si no hay match claro.
-    // Usaremos un método específico para el tracking completo de esta conexión.
-    const matchRecord = await contactService.registerWhatsappMatch(contactId, scannerContact?.id || null, scannerPhone)
+    // 3. Registramos el match con el teléfono del escáner
+    const matchRecord = await contactService.registerWhatsappMatch(targetContact.id, scannerContact?.id || null, scannerPhone)
 
     if (!matchRecord) {
         console.error('No se pudo crear el registro del match')
         return;
     }
 
-    // 3. Enviamos los mensajes de vuelta (Botones interactivos y perfil)
+    // 4. Enviamos el mensaje interactivo con los botones de clasificación
     await whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, matchRecord[0].id)
 }
+
 
 async function processButtonReply(scannerPhone: string, buttonId: string) {
     console.log(`[DEBUG] Recibido click en botón. Button ID: ${buttonId}`)
