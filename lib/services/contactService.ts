@@ -73,14 +73,27 @@ export const contactService = {
     },
 
     async insertMany(contacts: Omit<Contact, 'id' | 'created_at'>[]) {
-        const { data, error } = await supabase
-            .from('contacts')
-            .insert(contacts)
-            .select();
+        const MAX_RETRIES = 3
 
-        if (error) throw error;
-        return data;
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            const { data, error } = await supabase
+                .from('contacts')
+                .insert(contacts)
+                .select()
+
+            // Código 23505 = unique_violation en Postgres
+            // Si hay colisión de qr_token, reintentamos (la DB regenera un token nuevo)
+            if (error?.code === '23505' && error.message.includes('qr_token')) {
+                console.warn(`Colisión de qr_token en intento ${attempt}. Reintentando...`)
+                if (attempt === MAX_RETRIES) throw new Error('No se pudo generar un qr_token único después de 3 intentos.')
+                continue
+            }
+
+            if (error) throw error
+            return data
+        }
     },
+
 
     async registerMatch(contactId: string, scannerId?: string) {
         const { data, error } = await supabase
