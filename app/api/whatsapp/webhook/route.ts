@@ -105,16 +105,43 @@ async function processConnection(scannerPhone: string, text: string) {
 async function processButtonReply(scannerPhone: string, buttonId: string) {
     console.log(`[DEBUG] Recibido click en botón. Button ID: ${buttonId}`)
 
-    // Format de buttonId expected: type_matchId (e.g., negocio_1234-5678)
+    // Format de buttonId: type_matchId (e.g., negocio_1234-5678)
     const [action, matchId] = buttonId.split('_')
 
-    console.log(`[DEBUG] Intentando calificar Match DB ID: ${matchId} como: ${action}`)
-
-    if (matchId) {
-        const result = await contactService.updateMatchConnectionType(matchId, action)
-        console.log(`[DEBUG] Resultado de Supabase update:`, result)
-        await whatsappService.sendTextMessage(scannerPhone, "¡Gracias! Tu conexión ha sido clasificada exitosamente. ✅")
-    } else {
+    if (!matchId) {
         console.error(`[DEBUG] No se pudo extraer el matchId del buttonId: ${buttonId}`)
+        return
     }
+
+    console.log(`[DEBUG] Clasificando Match ID: ${matchId} como: ${action}`)
+
+    // 1. Guardamos el tipo de conexión y obtenemos el match actualizado
+    const matchResult = await contactService.updateMatchConnectionType(matchId, action)
+    console.log(`[DEBUG] Match actualizado:`, matchResult)
+
+    if (!matchResult?.[0]) {
+        console.error(`[DEBUG] No se pudo actualizar el match: ${matchId}`)
+        return
+    }
+
+    // 2. Buscamos el contacto dueño del QR para compartir su número
+    const targetContact = await contactService.getById(matchResult[0].contact_id)
+
+    if (targetContact?.phone) {
+        // Limpiamos el teléfono para el link wa.me (solo dígitos)
+        const cleanPhone = targetContact.phone.replace(/\D/g, '')
+        const waLink = `https://wa.me/${cleanPhone}`
+
+        // 3. Enviamos los datos del contacto ANTES del mensaje de confirmación
+        const contactInfoMessage =
+            `👤 *${targetContact.name}*\n` +
+            `${targetContact.company ? `🏢 ${targetContact.company}\n` : ''}` +
+            `📱 Chatea directamente:\n${waLink}`
+
+        await whatsappService.sendTextMessage(scannerPhone, contactInfoMessage)
+    }
+
+    // 4. Confirmación final
+    await whatsappService.sendTextMessage(scannerPhone, '¡Gracias! Tu conexión ha sido clasificada exitosamente. ✅')
 }
+
