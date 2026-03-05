@@ -2,6 +2,9 @@ import { getMatchesReport } from '@/app/actions/contacts'
 import { Zap, ArrowLeft, Activity, Users, Target } from 'lucide-react'
 import Link from 'next/link'
 
+// Forzamos rendering dinámico para que el dashboard siempre muestre datos frescos
+export const dynamic = 'force-dynamic'
+
 export default async function MatchesDashboard() {
     const report = await getMatchesReport()
 

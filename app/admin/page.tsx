@@ -4,6 +4,9 @@ import ContactTable from '@/app/components/ContactTable'
 import { Users, LayoutGrid, Activity } from 'lucide-react'
 import Link from 'next/link'
 
+// Forzamos rendering dinámico para siempre mostrar la lista actualizada de contactos
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const contacts = await getContacts()
 
