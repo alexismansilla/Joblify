@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, Variants } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Printer, Check, User, Hash, Loader2 } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Printer, Check, User, Hash, Loader2, UserPlus, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
 import QRCode from 'qrcode'
 import { findContactByIdentifier } from '@/app/actions/contacts'
 import { Contact } from '@/lib/services/contactService'
+import { printToQZ } from '@/lib/qz'
+import { generateCredentialImage } from '@/lib/credentialRenderer'
 
 const fadeUp: Variants = {
     initial: { opacity: 0, y: 10 },
@@ -23,6 +26,7 @@ export default function CheckIn() {
     const [step, setStep] = useState<'input' | 'result'>('input')
     const [identifier, setIdentifier] = useState('')
     const [loading, setLoading] = useState(false)
+    const [printing, setPrinting] = useState(false)
     const [contact, setContact] = useState<Contact | null>(null)
     const [qrCodeUrl, setQrCodeUrl] = useState('')
     const [error, setError] = useState<string | null>(null)
@@ -78,6 +82,26 @@ export default function CheckIn() {
         setError(null)
     }
 
+    const handlePrintCredential = async () => {
+        if (!qrCodeUrl || !contact) return
+        setPrinting(true)
+        try {
+            // Generamos la imagen completa de la credencial (nombre + empresa + QR)
+            const credentialImageBase64 = await generateCredentialImage({
+                name: contact.name,
+                company: (contact as any).company || 'CONNECTIFY',
+                qrBase64: qrCodeUrl,
+            })
+
+            const result = await printToQZ(credentialImageBase64)
+            if (!result.success) {
+                alert(`Error al imprimir:\n${result.reason}`)
+            }
+        } finally {
+            setPrinting(false)
+        }
+    }
+
     return (
         <div className="min-h-screen bg-white dark:bg-[#050505] text-black dark:text-white font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black overflow-hidden relative">
             {/* Minimalist Grid Pattern Background */}
@@ -108,47 +132,79 @@ export default function CheckIn() {
                         </div>
 
                         {/* Right column Form */}
-                        <div className="flex-1 flex flex-col justify-center p-8 md:p-16 lg:p-24 relative z-10">
-                            <motion.div variants={fadeUp} className="max-w-xl w-full mx-auto md:mx-0">
-                                <form onSubmit={handleSearch} className="space-y-16">
-                                    <div className="space-y-6">
-                                        <label htmlFor="rut" className="block text-xs font-mono tracking-widest uppercase opacity-60">
-                                            01 // Ingresar RUT del asistente
-                                        </label>
-                                        <div className="relative group">
-                                            <input
-                                                id="rut"
-                                                ref={inputRef}
-                                                type="text"
-                                                placeholder="Ej: 12345678-9"
-                                                value={identifier}
-                                                onChange={(e) => setIdentifier(e.target.value)}
-                                                className="w-full bg-transparent border-b-2 border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight transition-colors placeholder:opacity-20 rounded-none"
-                                                autoComplete="off"
-                                            />
-                                            {error && (
-                                                <div className="absolute -bottom-8 left-0 text-red-600 dark:text-red-400 font-mono text-xs uppercase tracking-widest flex items-center gap-2">
-                                                    [ERROR]: {error}
-                                                </div>
-                                            )}
+                        <div className="flex-1 flex flex-col p-8 md:p-16 lg:p-24 relative z-10">
+                            {/* Formulario centrado verticalmente */}
+                            <div className="flex-1 flex flex-col justify-center">
+                                <motion.div variants={fadeUp} className="max-w-xl w-full mx-auto md:mx-0">
+                                    <form onSubmit={handleSearch} className="space-y-16">
+                                        <div className="space-y-6">
+                                            <label htmlFor="rut" className="block text-xs font-mono tracking-widest uppercase opacity-60">
+                                                01 // Ingresar RUT del asistente
+                                            </label>
+                                            <div className="relative group">
+                                                <input
+                                                    id="rut"
+                                                    ref={inputRef}
+                                                    type="text"
+                                                    placeholder="Ej: 12345678-9"
+                                                    value={identifier}
+                                                    onChange={(e) => setIdentifier(e.target.value)}
+                                                    className="w-full bg-transparent border-b-2 border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight transition-colors placeholder:opacity-20 rounded-none"
+                                                    autoComplete="off"
+                                                />
+                                                {error && (
+                                                    <div className="absolute -bottom-8 left-0 text-red-600 dark:text-red-400 font-mono text-xs uppercase tracking-widest flex items-center gap-2">
+                                                        [ERROR]: {error}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={loading || !identifier.trim()}
-                                        className="group relative w-full lg:w-auto inline-flex items-center justify-between gap-8 px-8 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300"
+                                        <button
+                                            type="submit"
+                                            disabled={loading || !identifier.trim()}
+                                            className="group relative w-full lg:w-auto inline-flex items-center justify-between gap-8 px-8 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300"
+                                        >
+                                            <span className="font-mono text-sm tracking-widest uppercase font-bold">
+                                                {loading ? 'BUSCANDO...' : 'VERIFICAR IDENTIDAD'}
+                                            </span>
+                                            {loading ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                            )}
+                                        </button>
+                                    </form>
+                                </motion.div>
+                            </div>
+
+                            {/* Accesos rápidos anclados al fondo */}
+                            <motion.div variants={fadeUp} className="max-w-xl w-full mx-auto md:mx-0 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+                                    <span className="font-mono text-[10px] tracking-widest uppercase opacity-40">// acceso rápido</span>
+                                    <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Link
+                                        href="/admin/registro-manual"
+                                        className="group inline-flex items-center justify-between gap-3 px-4 py-3 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
                                     >
-                                        <span className="font-mono text-sm tracking-widest uppercase font-bold">
-                                            {loading ? 'BUSCANDO...' : 'VERIFICAR IDENTIDAD'}
+                                        <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
+                                            Registro<br />Manual
                                         </span>
-                                        {loading ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                        )}
-                                    </button>
-                                </form>
+                                        <UserPlus className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                                    </Link>
+                                    <Link
+                                        href="/admin/autoridades"
+                                        className="group inline-flex items-center justify-between gap-3 px-4 py-3 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
+                                    >
+                                        <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
+                                            Lista<br />Autoridades
+                                        </span>
+                                        <ShieldCheck className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                                    </Link>
+                                </div>
                             </motion.div>
                         </div>
                     </motion.div>
@@ -206,11 +262,17 @@ export default function CheckIn() {
 
                             <motion.div variants={fadeUp} className="flex flex-col gap-4 max-w-sm mt-8 md:mt-0">
                                 <button
-                                    onClick={() => window.print()}
-                                    className="group relative w-full inline-flex items-center justify-between gap-4 px-6 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-all duration-300"
+                                    onClick={handlePrintCredential}
+                                    disabled={printing}
+                                    className="group relative w-full inline-flex items-center justify-between gap-4 px-6 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                                 >
-                                    <span className="font-mono text-sm tracking-widest uppercase font-bold">IMPRIMIR CREDENCIAL</span>
-                                    <Printer className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                                    <span className="font-mono text-sm tracking-widest uppercase font-bold">
+                                        {printing ? 'ENVIANDO...' : 'IMPRIMIR CREDENCIAL'}
+                                    </span>
+                                    {printing
+                                        ? <Loader2 className="w-5 h-5 animate-spin" />
+                                        : <Printer className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                                    }
                                 </button>
                             </motion.div>
                         </div>

@@ -91,30 +91,33 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
             const finalQrBase64 = await addLogoToQR(qrBase64);
 
             const mode = process.env.NEXT_PUBLIC_QR_OUTPUT_MODE || 'PRINT';
-            let printed = false;
 
             if (mode === 'PRINT') {
-                printed = await printToQZ(finalQrBase64)
-            }
+                // Intentar enviar a la impresora Brother QL-800 vía QZ Tray
+                const result = await printToQZ(finalQrBase64)
 
-            if (!printed) {
-                const doc = new jsPDF()
-                doc.setFontSize(20)
-                doc.text('Contacto Connectify', 10, 20)
-                doc.setFontSize(12)
-                doc.text(`Nombre: ${contact.name}`, 10, 40)
-                doc.text(`Email: ${contact.email || 'N/A'}`, 10, 50)
-                doc.text(`Tel: ${contact.phone || 'N/A'}`, 10, 60)
-                // Usamos finalQrBase64 para el PDF también para que tenga el logo
-                doc.addImage(finalQrBase64, 'PNG', 10, 70, 60, 60)
-                doc.save(`QR_${contact.name.replace(/\s+/g, '_')}.pdf`)
-
-                if (mode === 'PRINT') {
-                    alert('QZ Tray no detectado. Se ha descargado el PDF.')
-                } else {
-                    alert('Modo PDF activo. El archivo se ha descargado.')
+                if (result.success) {
+                    alert(`✅ Credencial enviada a: ${result.printerUsed}`)
+                    return
                 }
+
+                // QZ Tray no está activo o la impresora no se encontró — fallback a PDF
+                const continueWithPdf = confirm(
+                    `⚠️ No se pudo imprimir directamente:\n${result.reason}\n\n¿Descargar como PDF en su lugar?`
+                )
+                if (!continueWithPdf) return
             }
+
+            // Modo PDF (o fallback desde PRINT)
+            const doc = new jsPDF()
+            doc.setFontSize(20)
+            doc.text('Contacto Connectify', 10, 20)
+            doc.setFontSize(12)
+            doc.text(`Nombre: ${contact.name}`, 10, 40)
+            doc.text(`Email: ${contact.email || 'N/A'}`, 10, 50)
+            doc.text(`Tel: ${contact.phone || 'N/A'}`, 10, 60)
+            doc.addImage(finalQrBase64, 'PNG', 10, 70, 60, 60)
+            doc.save(`QR_${contact.name.replace(/\s+/g, '_')}.pdf`)
         } catch (error) {
             console.error(error)
             alert('Error al generar el QR')
