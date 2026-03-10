@@ -1,7 +1,7 @@
 import { getContacts } from '@/app/actions/contacts'
 import FileUpload from '@/app/components/FileUpload'
 import ContactTable from '@/app/components/ContactTable'
-import { Users, LayoutGrid, Activity } from 'lucide-react'
+import { Users, LayoutGrid, Activity, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 // Forzamos rendering dinámico para siempre mostrar la lista actualizada de contactos
@@ -18,7 +18,14 @@ export default async function Home() {
       <nav className="fixed top-0 inset-x-0 h-20 border-b border-black/10 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md z-50 transition-colors">
         <div className="max-w-[1400px] mx-auto px-8 h-full flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col">
+            <Link 
+              href="/" 
+              className="group flex items-center justify-center w-10 h-10 border border-black dark:border-white rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+              title="Volver al inicio"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            </Link>
+            <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col ml-2">
               Connectify<span className="text-[10px] font-mono tracking-widest opacity-50">ADMIN DASHBOARD</span>
             </h1>
           </div>
