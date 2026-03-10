@@ -1,7 +1,6 @@
 import { getMatchesReport } from '@/app/actions/contacts'
-import { Zap, ArrowLeft, Activity, Users, Target } from 'lucide-react'
-import Link from 'next/link'
-
+import { Zap, Activity, Users, Target } from 'lucide-react'
+import AdminNavbar from '@/app/components/AdminNavbar'
 // Forzamos rendering dinámico para que el dashboard siempre muestre datos frescos
 export const dynamic = 'force-dynamic'
 
@@ -31,26 +30,7 @@ export default async function MatchesDashboard() {
             <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-difference bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:4rem_4rem] -z-10"></div>
 
             {/* Topbar flotante */}
-            <nav className="fixed top-0 inset-x-0 h-20 border-b border-black/10 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md z-50 transition-colors">
-                <div className="max-w-[1400px] mx-auto px-8 h-full flex items-center justify-between">
-                    <Link
-                        href="/admin"
-                        className="group flex items-center gap-3 px-5 py-2.5 hover:opacity-50 transition-opacity"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span className="font-mono text-xs font-bold tracking-widest uppercase">Volver al Dashboard</span>
-                    </Link>
-
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col items-end">
-                            Connectify<span className="text-[10px] font-mono tracking-widest opacity-50">ANALYTICS ENGINE</span>
-                        </h1>
-                        <div className="w-10 h-10 border border-black/10 dark:border-white/10 flex items-center justify-center bg-black/5 dark:bg-white/5">
-                            <Activity className="w-5 h-5" />
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <AdminNavbar />
 
             <main className="max-w-[1400px] mx-auto px-8 pt-28 relative z-10">
 

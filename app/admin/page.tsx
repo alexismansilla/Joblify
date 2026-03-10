@@ -1,9 +1,8 @@
 import { getContacts } from '@/app/actions/contacts'
 import FileUpload from '@/app/components/FileUpload'
 import ContactTable from '@/app/components/ContactTable'
-import { Users, LayoutGrid, Activity, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-
+import { Users } from 'lucide-react'
+import AdminNavbar from '@/app/components/AdminNavbar'
 // Forzamos rendering dinámico para siempre mostrar la lista actualizada de contactos
 export const dynamic = 'force-dynamic'
 
@@ -15,31 +14,7 @@ export default async function Home() {
       {/* Minimalist Grid Pattern Background */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-difference bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:4rem_4rem] -z-10"></div>
 
-      <nav className="fixed top-0 inset-x-0 h-20 border-b border-black/10 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md z-50 transition-colors">
-        <div className="max-w-[1400px] mx-auto px-8 h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/" 
-              className="group flex items-center justify-center w-10 h-10 border border-black dark:border-white rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
-              title="Volver al inicio"
-            >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            </Link>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col ml-2">
-              Connectify<span className="text-[10px] font-mono tracking-widest opacity-50">ADMIN DASHBOARD</span>
-            </h1>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link
-              href="/matches"
-              className="hidden md:flex items-center gap-2 group hover:opacity-50 transition-opacity"
-            >
-              <Activity className="w-4 h-4" />
-              <span className="font-mono text-xs font-bold tracking-widest uppercase">Métricas</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AdminNavbar />
 
       <main className="max-w-[1400px] mx-auto px-8 pt-28 pb-24 relative overflow-hidden">
         <section className="mb-12 relative z-10 flex flex-col md:flex-row gap-8">

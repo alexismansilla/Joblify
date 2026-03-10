@@ -1,9 +1,8 @@
 import { getAuthorities } from '@/app/actions/authorities'
 import AuthorityFileUpload from '@/app/components/AuthorityFileUpload'
 import AuthorityTable from '@/app/components/AuthorityTable'
-import { ShieldCheck, ArrowLeft, Activity } from 'lucide-react'
-import Link from 'next/link'
-
+import { ShieldCheck } from 'lucide-react'
+import AdminNavbar from '@/app/components/AdminNavbar'
 // Siempre dinámico: la lista debe reflejar los últimos cambios en tiempo real
 export const dynamic = 'force-dynamic'
 
@@ -16,37 +15,7 @@ export default async function AutoridadesPage() {
             <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-difference bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:4rem_4rem] -z-10" />
 
             {/* Navbar */}
-            <nav className="fixed top-0 inset-x-0 h-20 border-b border-black/10 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md z-50 transition-colors">
-                <div className="max-w-[1400px] mx-auto px-8 h-full flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <Link
-                            href="/admin"
-                            className="inline-flex items-center gap-2 hover:opacity-50 transition-opacity"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            <span className="font-mono text-xs tracking-widest uppercase font-bold">Admin</span>
-                        </Link>
-
-                        <div className="w-px h-5 bg-black/20 dark:bg-white/20" />
-
-                        <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-4 h-4 opacity-70" />
-                            <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col">
-                                Autoridades
-                                <span className="text-[10px] font-mono tracking-widest opacity-50">ACREDITACIÓN SIN QR</span>
-                            </h1>
-                        </div>
-                    </div>
-
-                    <Link
-                        href="/matches"
-                        className="hidden md:flex items-center gap-2 hover:opacity-50 transition-opacity"
-                    >
-                        <Activity className="w-4 h-4" />
-                        <span className="font-mono text-xs font-bold tracking-widest uppercase">Métricas</span>
-                    </Link>
-                </div>
-            </nav>
+            <AdminNavbar />
 
             <main className="max-w-[1400px] mx-auto px-8 pt-28 pb-24 relative">
 

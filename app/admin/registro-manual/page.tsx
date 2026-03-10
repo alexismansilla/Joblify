@@ -6,6 +6,7 @@ import { ArrowLeft, UserPlus, Check, AlertCircle, Loader2, User, Hash, Mail, Pho
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { Input } from '@/app/components/ui/Input'
+import AdminNavbar from '@/app/components/AdminNavbar'
 
 
 interface FieldConfig {
@@ -128,27 +129,7 @@ export default function RegistroManualPage() {
             <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-difference bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:4rem_4rem] -z-10" />
 
             {/* Navbar */}
-            <nav className="fixed top-0 inset-x-0 h-20 border-b border-black/10 dark:border-white/10 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md z-50">
-                <div className="max-w-[1400px] mx-auto px-8 h-full flex items-center gap-6">
-                    <Link
-                        href="/admin"
-                        className="inline-flex items-center gap-2 hover:opacity-50 transition-opacity"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span className="font-mono text-xs tracking-widest uppercase font-bold">Admin</span>
-                    </Link>
-
-                    <div className="w-px h-5 bg-black/20 dark:bg-white/20" />
-
-                    <div className="flex items-center gap-3">
-                        <UserPlus className="w-4 h-4 opacity-70" />
-                        <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col">
-                            Registro Manual
-                            <span className="text-[10px] font-mono tracking-widest opacity-50">ALTA INDIVIDUAL DE ASISTENTES</span>
-                        </h1>
-                    </div>
-                </div>
-            </nav>
+            <AdminNavbar />
 
             {/* Contenido */}
             <main className="max-w-[1400px] mx-auto px-8 pt-32 pb-24">
