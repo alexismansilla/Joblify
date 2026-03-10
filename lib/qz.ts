@@ -6,24 +6,60 @@ const BROTHER_PRINTER_NAME =
     process.env.NEXT_PUBLIC_PRINTER_NAME || 'Brother QL-800'
 
 // La QL-800 usa etiquetas DK de 62mm de ancho.
-// Tamaño en puntos a 300 DPI: 62mm ≈ 732px. La altura se ajusta automáticamente.
 const QL800_LABEL_WIDTH_MM = 62
-const QL800_LABEL_HEIGHT_MM = 62 // 62mm — etiqueta cuadrada DK 62mm × 62mm
+const QL800_LABEL_HEIGHT_MM = 62
 
 type PrintResult =
     | { success: true; printerUsed: string }
     | { success: false; reason: string }
 
+/**
+ * Configura QZ Tray para:
+ * 1. Leer el certificado público desde /public/digital-certificate.txt (accesible via URL)
+ * 2. Firmar los challenges llamando a /api/qz-sign (server-side, nunca expone la private key)
+ *
+ * Esto funciona tanto en local como desde la URL de Vercel.
+ */
+function setupQZSecurity() {
+    // El certificado vive en /public y es accesible como asset estático
+    qz.security.setCertificatePromise((resolve, reject) => {
+        fetch('/digital-certificate.txt')
+            .then(res => {
+                if (!res.ok) throw new Error(`No se pudo cargar el certificado: ${res.status}`)
+                return res.text()
+            })
+            .then(resolve)
+            .catch((e: any) => reject(e))
+    })
+
+    // La firma se delega a la API Route server-side que tiene acceso a la private key
+    qz.security.setSignatureAlgorithm('SHA512')
+    qz.security.setSignaturePromise((toSign: string) => {
+        return (resolve, reject) => {
+            fetch('/api/qz-sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ toSign }),
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error(`Error al firmar challenge: ${res.status}`)
+                    return res.json()
+                })
+                .then(data => resolve(data.signature))
+                .catch((e: any) => reject(e))
+        }
+    })
+}
 
 /**
  * Conecta con QZ Tray y envía un trabajo de impresión a la impresora Brother QL-800.
  * La imagen debe ser un Data URL base64 (ej: "data:image/png;base64,...").
- *
- * Retorna un objeto descriptivo en lugar de un booleano para que el llamador
- * pueda informar al usuario con precisión.
  */
 export async function printToQZ(qrBase64: string): Promise<PrintResult> {
     try {
+        // Configurar seguridad ANTES de conectar
+        setupQZSecurity()
+
         if (!qz.websocket.isActive()) {
             await qz.websocket.connect({
                 host: 'localhost',
@@ -34,8 +70,6 @@ export async function printToQZ(qrBase64: string): Promise<PrintResult> {
             })
         }
 
-        // Buscar la impresora configurada; si no existe, lanzar error claro.
-        // qz.printers.find() puede retornar string | string[], normalizamos a array siempre.
         const rawPrinters = await qz.printers.find()
         const availablePrinters: string[] = [rawPrinters].flat()
         const matchedPrinter = availablePrinters.find(
@@ -50,7 +84,6 @@ export async function printToQZ(qrBase64: string): Promise<PrintResult> {
             )
         }
 
-        // Configuración optimizada para papel continuo etiquetas DK de la QL-800
         const config = qz.configs.create(matchedPrinter, {
             size: {
                 width: QL800_LABEL_WIDTH_MM,
@@ -61,13 +94,11 @@ export async function printToQZ(qrBase64: string): Promise<PrintResult> {
             copies: 1
         })
 
-        // Enviamos la imagen en pixel format
         const data = [
             {
                 type: 'pixel',
                 format: 'image',
                 flavor: 'base64',
-                // Extraemos solo la parte base64, sin el prefijo "data:image/png;base64,"
                 data: qrBase64.split(',')[1],
                 options: {
                     language: 'ESCPOS',
