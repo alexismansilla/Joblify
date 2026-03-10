@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { findContactByIdentifier, getContactById } from '@/app/actions/contacts'
 import { User, LogOut, Loader2, Smartphone } from 'lucide-react'
+import { Input } from './ui/Input'
+
 
 export default function IdentityStatus() {
     const [user, setUser] = useState<any>(null)
@@ -73,11 +75,10 @@ export default function IdentityStatus() {
                                     <label className="block text-[10px] font-mono tracking-widest uppercase opacity-60">
                                         01 // DATA O TELEMETRÍA (EMAIL/PHONE)
                                     </label>
-                                    <input
+                                    <Input
                                         type="text"
                                         placeholder="Ej: 912345678"
                                         autoFocus
-                                        className="w-full bg-transparent border-b-2 border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 text-3xl font-black tracking-tight transition-colors placeholder:opacity-20 rounded-none uppercase"
                                         value={identifier}
                                         onChange={(e) => setIdentifier(e.target.value)}
                                         required

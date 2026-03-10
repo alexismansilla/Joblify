@@ -14,6 +14,7 @@ type PrintResult =
     | { success: true; printerUsed: string }
     | { success: false; reason: string }
 
+
 /**
  * Conecta con QZ Tray y envía un trabajo de impresión a la impresora Brother QL-800.
  * La imagen debe ser un Data URL base64 (ej: "data:image/png;base64,...").
@@ -49,15 +50,18 @@ export async function printToQZ(qrBase64: string): Promise<PrintResult> {
             )
         }
 
-        // Configuración optimizada para etiquetas DK de la QL-800
+        // Configuración optimizada para papel continuo etiquetas DK de la QL-800
         const config = qz.configs.create(matchedPrinter, {
-            size: { width: QL800_LABEL_WIDTH_MM, height: QL800_LABEL_HEIGHT_MM },
+            size: {
+                width: QL800_LABEL_WIDTH_MM,
+                height: QL800_LABEL_HEIGHT_MM
+            },
             units: 'mm',
-            colorType: 'blackwhite', // La QL-800 solo imprime en blanco y negro
-            copies: 1,
+            colorType: 'blackwhite',
+            copies: 1
         })
 
-        // Enviamos la imagen en pixel format — QZ Tray la adapta al tamaño de etiqueta.
+        // Enviamos la imagen en pixel format
         const data = [
             {
                 type: 'pixel',

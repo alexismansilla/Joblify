@@ -3,79 +3,16 @@
 import { useState, useMemo } from 'react'
 import { Printer, Search, User, ChevronLeft, ChevronRight, Loader2, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Input } from './ui/Input'
 import { jsPDF } from 'jspdf'
 import { printToQZ } from '@/lib/qz'
+import { generateAuthorityCredentialImage } from '@/lib/authorityCredentialRenderer'
 
 interface Authority {
     id: string
     name: string
     position: string
     organization: string | null
-}
-
-// Genera la imagen de credencial en canvas para autoridades (sin QR)
-async function generateAuthorityCredentialImage(authority: Authority): Promise<string> {
-    const canvas = document.createElement('canvas')
-    // Proporciones de tarjeta de visita estilo credencial: 696 x 1050 (aprox badge vertical)
-    canvas.width = 696
-    canvas.height = 1050
-    const ctx = canvas.getContext('2d')!
-
-    // Fondo blanco
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Banda superior negra
-    ctx.fillStyle = '#000000'
-    ctx.fillRect(0, 0, canvas.width, 260)
-
-    // Nombre en la banda superior
-    ctx.fillStyle = '#ffffff'
-    ctx.textAlign = 'center'
-
-    const nameParts = authority.name.toUpperCase().split(' ')
-    const firstName = nameParts.slice(0, Math.ceil(nameParts.length / 2)).join(' ')
-    const lastName = nameParts.slice(Math.ceil(nameParts.length / 2)).join(' ')
-
-    ctx.font = 'bold 72px Arial, sans-serif'
-    ctx.fillText(firstName, canvas.width / 2, 120, canvas.width - 60)
-
-    ctx.font = 'bold 72px Arial, sans-serif'
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
-    ctx.fillText(lastName, canvas.width / 2, 210, canvas.width - 60)
-
-    // Cargo (position)
-    ctx.fillStyle = '#000000'
-    ctx.font = 'bold 42px Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(authority.position.toUpperCase(), canvas.width / 2, 370)
-
-    // Línea separadora
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    ctx.moveTo(60, 420)
-    ctx.lineTo(canvas.width - 60, 420)
-    ctx.stroke()
-
-    // Organización
-    if (authority.organization) {
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'
-        ctx.font = '28px Arial, sans-serif'
-        ctx.fillText(authority.organization.toUpperCase(), canvas.width / 2, 490)
-    }
-
-    // Logo "CONNECTIFY" footer
-    ctx.fillStyle = '#000000'
-    ctx.font = 'bold 22px Arial, sans-serif'
-    ctx.letterSpacing = '8px'
-    ctx.fillText('CONNECTIFY', canvas.width / 2, canvas.height - 80)
-
-    ctx.font = '16px Arial, sans-serif'
-    ctx.fillStyle = 'rgba(0,0,0,0.4)'
-    ctx.fillText('AUTORIDAD ACREDITADA', canvas.width / 2, canvas.height - 50)
-
-    return canvas.toDataURL('image/png')
 }
 
 export default function AuthorityTable({ authorities }: { authorities: Authority[] }) {
@@ -124,10 +61,10 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
                 if (!continueWithPdf) return
             }
 
-            // Fallback PDF
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [75, 105] })
-            doc.addImage(credentialBase64, 'PNG', 0, 0, 75, 105)
-            doc.save(`Credencial_${authority.name.replace(/\s+/g, '_')}.pdf`)
+            // Fallback PDF. Como la imagen redujo un 30% su alto (732x512), usamos formato rectangular apaisado ~62x43mm
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [62, 43] })
+            doc.addImage(credentialBase64, 'PNG', 0, 0, 62, 43)
+            doc.save(`Autoridad_${authority.name.replace(/\s+/g, '_')}.pdf`)
         } catch (error) {
             console.error('Error al imprimir credencial de autoridad:', error)
             alert('Error al generar la credencial')
@@ -140,18 +77,14 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
         <div className="w-full flex flex-col gap-6">
             {/* Buscador */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="relative w-full md:max-w-md">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none opacity-50">
-                        <Search className="h-5 w-5" />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="BUSCAR POR NOMBRE, CARGO U ORGANIZACIÓN..."
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 pl-12 pr-4 font-mono text-sm tracking-widest uppercase transition-colors placeholder:opacity-30 rounded-none"
-                    />
-                </div>
+                <Input
+                    type="text"
+                    placeholder="BUSCAR POR NOMBRE, CARGO U ORGANIZACIÓN..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    icon={<Search className="h-5 w-5" />}
+                    containerClassName="md:max-w-md"
+                />
 
                 <div className="font-mono text-[10px] font-bold tracking-widest uppercase opacity-50">
                     MOSTRANDO {currentAuthorities.length} DE {filteredAuthorities.length} AUTORIDADES

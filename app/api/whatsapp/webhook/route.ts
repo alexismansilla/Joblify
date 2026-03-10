@@ -99,6 +99,9 @@ async function processConnection(scannerPhone: string, text: string) {
 
     // 4. Enviamos el mensaje interactivo con los botones de clasificación
     await whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, matchRecord[0].id)
+
+    // 5. Enviamos la tarjeta de contacto nativa asegurándonos de que ya se despachó el anterior
+    await whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone)
 }
 
 
@@ -124,15 +127,7 @@ async function processButtonReply(scannerPhone: string, buttonId: string) {
         return
     }
 
-    // 2. Buscamos el contacto dueño del QR para compartir su número
-    const targetContact = await contactService.getById(matchResult[0].contact_id)
-
-    if (targetContact?.phone) {
-        // 3. Enviamos una Contact Card nativa de WhatsApp (foto de perfil + botones Mensaje/Añadir)
-        await whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone)
-    }
-
-    // 4. Confirmación final
+    // Confirmación final
     await whatsappService.sendTextMessage(scannerPhone, '¡Gracias! Tu conexión ha sido clasificada exitosamente. ✅')
 }
 

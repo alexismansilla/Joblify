@@ -5,6 +5,8 @@ import { motion, AnimatePresence, Variants } from 'framer-motion'
 import { ArrowRight, ArrowLeft, Printer, Check, User, Hash, Loader2, UserPlus, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
+import { Input } from '@/app/components/ui/Input'
+
 import { findContactByIdentifier } from '@/app/actions/contacts'
 import { Contact } from '@/lib/services/contactService'
 import { printToQZ } from '@/lib/qz'
@@ -28,7 +30,9 @@ export default function CheckIn() {
     const [loading, setLoading] = useState(false)
     const [printing, setPrinting] = useState(false)
     const [contact, setContact] = useState<Contact | null>(null)
-    const [qrCodeUrl, setQrCodeUrl] = useState('')
+    const [qrDataUrl, setQrDataUrl] = useState('')
+    const [includeQR, setIncludeQR] = useState(true)
+    const [credentialImageUrl, setCredentialImageUrl] = useState('')
     const [error, setError] = useState<string | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -38,6 +42,29 @@ export default function CheckIn() {
         }
     }, [step])
 
+    // Regenerar la credencial dinámicamente si se alterna includeQR
+    useEffect(() => {
+        if (!contact || !qrDataUrl) return
+
+        let isMounted = true
+        async function updateImage() {
+            try {
+                const credentialImg = await generateCredentialImage({
+                    name: contact!.name,
+                    company: (contact as any).company || ' ',
+                    qrBase64: qrDataUrl,
+                    includeQR
+                })
+                if (isMounted) setCredentialImageUrl(credentialImg)
+            } catch (err) {
+                console.error('Error re-generando credencial:', err)
+            }
+        }
+        updateImage()
+
+        return () => { isMounted = false }
+    }, [includeQR, contact, qrDataUrl])
+
     const handleSearch = async (e?: React.FormEvent) => {
         e?.preventDefault()
         if (!identifier.trim()) return
@@ -46,22 +73,22 @@ export default function CheckIn() {
         setError(null)
 
         try {
-            // Se usa el RUT para buscar
             const result = await findContactByIdentifier(identifier.trim())
             if (result) {
                 setContact(result)
+
+                // Generamos QR
                 const targetPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUM_BUSINESS?.replace(/\D/g, '') || ''
                 const msg = encodeURIComponent(`Hola! Conecté con @${result.qr_token}`)
                 const connectUrl = `https://wa.me/${targetPhone}?text=${msg}`
                 const qrDataUrl = await QRCode.toDataURL(connectUrl, {
                     width: 512,
                     margin: 1,
-                    color: {
-                        dark: '#000000',
-                        light: '#ffffff',
-                    },
+                    color: { dark: '#000000', light: '#ffffff' },
                 })
-                setQrCodeUrl(qrDataUrl)
+
+                setQrDataUrl(qrDataUrl)
+                setIncludeQR(true)
                 setStep('result')
             } else {
                 setError('RUT no encontrado en el sistema.')
@@ -78,22 +105,17 @@ export default function CheckIn() {
         setStep('input')
         setIdentifier('')
         setContact(null)
-        setQrCodeUrl('')
+        setQrDataUrl('')
+        setCredentialImageUrl('')
         setError(null)
     }
 
     const handlePrintCredential = async () => {
-        if (!qrCodeUrl || !contact) return
+        if (!credentialImageUrl) return
         setPrinting(true)
         try {
-            // Generamos la imagen completa de la credencial (nombre + empresa + QR)
-            const credentialImageBase64 = await generateCredentialImage({
-                name: contact.name,
-                company: (contact as any).company || 'CONNECTIFY',
-                qrBase64: qrCodeUrl,
-            })
-
-            const result = await printToQZ(credentialImageBase64)
+            // credentialImageUrl ya es la imagen generada — la enviamos directo
+            const result = await printToQZ(credentialImageUrl)
             if (!result.success) {
                 alert(`Error al imprimir:\n${result.reason}`)
             }
@@ -142,14 +164,14 @@ export default function CheckIn() {
                                                 01 // Ingresar RUT del asistente
                                             </label>
                                             <div className="relative group">
-                                                <input
+                                                <Input
                                                     id="rut"
                                                     ref={inputRef}
                                                     type="text"
                                                     placeholder="Ej: 12345678-9"
                                                     value={identifier}
                                                     onChange={(e) => setIdentifier(e.target.value)}
-                                                    className="w-full bg-transparent border-b-2 border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight transition-colors placeholder:opacity-20 rounded-none"
+                                                    className="!text-3xl md:!text-5xl lg:!text-6xl !font-black !tracking-tight !border-b-2 !border-x-0 !border-t-0 !px-0 bg-transparent placeholder:opacity-20 transition-colors"
                                                     autoComplete="off"
                                                 />
                                                 {error && (
@@ -277,37 +299,35 @@ export default function CheckIn() {
                             </motion.div>
                         </div>
 
-                        {/* Right Column: QR Digital Frame */}
-                        <div className="flex-1 flex items-center justify-center p-8 md:p-12 lg:p-24 relative overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-                            <motion.div variants={fadeUp} className="relative z-10 bg-white p-8 md:p-12 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-transform duration-500 will-change-transform max-w-sm w-full text-black flex flex-col items-center">
-                                {/* Aesthetic frame cuts */}
-                                <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-black to-transparent opacity-20" />
-                                <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-black to-transparent opacity-20" />
-                                <div className="absolute inset-y-0 -left-px w-px bg-gradient-to-b from-transparent via-black to-transparent opacity-20" />
-                                <div className="absolute inset-y-0 -right-px w-px bg-gradient-to-b from-transparent via-black to-transparent opacity-20" />
+                        {/* Right Column: Preview WYSIWYG — la misma imagen que se imprime */}
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 relative overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+                            <motion.div
+                                variants={fadeUp}
+                                className="relative z-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] max-w-sm w-full transition-all duration-300"
+                            >
+                                {credentialImageUrl && (
+                                    <img
+                                        src={credentialImageUrl}
+                                        alt="Vista previa de la credencial"
+                                        className="w-full h-auto block select-none"
+                                        draggable={false}
+                                    />
+                                )}
+                            </motion.div>
 
-                                {/* Virtual Badge Header */}
-                                <div className="text-center w-full mb-6">
-                                    <h3 className="text-3xl font-black uppercase tracking-tight leading-none line-clamp-2 w-full break-words">
-                                        {contact?.name}
-                                    </h3>
-                                    <p className="text-xs font-bold uppercase tracking-widest mt-3 opacity-60">
-                                        {contact?.company || 'CONNECTIFY'}
-                                    </p>
-                                </div>
-
-                                <div className="aspect-square w-full max-w-[240px] bg-white flex items-center justify-center border-t border-b border-black/10 py-6 my-2">
-                                    {qrCodeUrl && (
-                                        <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain select-none pointer-events-none mix-blend-multiply" />
-                                    )}
-                                </div>
-
-                                <div className="mt-6 w-full text-center flex items-center justify-between">
-                                    <p className="text-[10px] font-mono uppercase tracking-widest text-black/60">
-                                        ESCANEAR PARA CONECTAR
-                                    </p>
-                                    <div className="w-2 h-2 bg-black rounded-full animate-pulse" />
-                                </div>
+                            <motion.div variants={fadeUp} className="mt-8 relative z-10 flex flex-col items-center gap-2">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" className="hidden" checked={includeQR} onChange={(e) => setIncludeQR(e.target.checked)} />
+                                    <div className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${includeQR ? 'bg-black dark:bg-white' : 'bg-black/20 dark:bg-white/20'}`}>
+                                        <div className={`absolute left-1 top-1 w-4 h-4 rounded-full bg-white dark:bg-black transition-transform duration-300 ${includeQR ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </div>
+                                    <span className="font-mono text-[10px] tracking-widest uppercase opacity-60 group-hover:opacity-100 transition-opacity font-bold">
+                                        {includeQR ? 'INCLUIR CÓDIGO QR' : 'OCULTAR CÓDIGO QR'}
+                                    </span>
+                                </label>
+                                <p className="text-[9px] font-mono tracking-widest uppercase opacity-40 max-w-[280px] text-center mt-2">
+                                    Al ocultar, la credencial se imprimirá más corta. Puede imprimirla de nuevo con QR más tarde.
+                                </p>
                             </motion.div>
                         </div>
                     </motion.div>
@@ -354,29 +374,13 @@ export default function CheckIn() {
             `}</style>
 
             {/* Hidden component for printing the badge */}
-            {step === 'result' && (
+            {step === 'result' && credentialImageUrl && (
                 <div id="print-section" className="hidden">
-                    <h2 style={{ fontSize: '36px', margin: 0, fontWeight: 900, textTransform: 'uppercase', lineHeight: 1.1 }}>
-                        {contact?.name}
-                    </h2>
-                    <p style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', opacity: 0.6, margin: '10px 0 0 0' }}>
-                        {contact?.company || 'CONNECTIFY'}
-                    </p>
-
-                    <div style={{ marginTop: '20px', borderTop: '2px solid rgba(0,0,0,0.1)', borderBottom: '2px solid rgba(0,0,0,0.1)', padding: '20px 0' }}>
-                        {qrCodeUrl && (
-                            <img
-                                src={qrCodeUrl}
-                                alt="QR Label"
-                                style={{
-                                    width: '240px',
-                                    height: '240px',
-                                    display: 'block',
-                                    margin: '0 auto'
-                                }}
-                            />
-                        )}
-                    </div>
+                    <img
+                        src={credentialImageUrl}
+                        alt="Credencial"
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                    />
                 </div>
             )}
         </div>

@@ -1,14 +1,13 @@
 // Dimensiones en píxeles a 300 DPI para etiquetas DK de la Brother QL-800.
 // 62mm × 62mm a 300 DPI ≈ 732 × 732 px.
 const LABEL_WIDTH_PX = 732  // 62mm a 300 DPI
-const LABEL_HEIGHT_PX = 732  // 62mm a 300 DPI
+const LABEL_HEIGHT_PX = 732  // Volviendo a formato cuadrado 62x62
 const PADDING_X = 40   // margen horizontal izquierdo/derecho
 
-interface CredentialData {
+interface AuthorityCredentialData {
     name: string
-    company: string
-    qrBase64: string // Data URL del QR (data:image/png;base64,...)
-    includeQR?: boolean // Determina si se imprime o no el código QR (default: true)
+    position: string
+    organization: string | null
 }
 
 /**
@@ -34,24 +33,19 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 }
 
 /**
- * Renderiza la credencial completa en un canvas y devuelve el Data URL base64.
+ * Renderiza la credencial de autoridad en un canvas y devuelve el Data URL base64.
  *
- * Layout:
- *   Nombre  (izquierda, bold, wraps si es largo)
- *   Empresa (izquierda, gris)
+ * Layout (mismo que credentialRenderer pero sin QR):
+ *   Nombre        (izquierda, bold, wraps si es largo)
+ *   Organización  (izquierda, gris oscuro, equivalente a company)
  *   ─────────────────────────────── (línea separadora)
- *
- *            [QR CODE]              (centrado)
+ *   CARGO         (en grande, ocupando el lugar del QR)
  */
-export function generateCredentialImage(data: CredentialData): Promise<string> {
+export function generateAuthorityCredentialImage(data: AuthorityCredentialData): Promise<string> {
     return new Promise((resolve, reject) => {
-        const withQR = data.includeQR !== false
-        // Volviendo a forzar tamaño 732x732 cuadrado para todo para no arruinar la impresión
-        const currentHeight = 732
-
         const canvas = document.createElement('canvas')
         canvas.width = LABEL_WIDTH_PX
-        canvas.height = currentHeight
+        canvas.height = LABEL_HEIGHT_PX
 
         const ctx = canvas.getContext('2d')
         if (!ctx) {
@@ -61,7 +55,7 @@ export function generateCredentialImage(data: CredentialData): Promise<string> {
 
         // --- Fondo blanco limpio ---
         ctx.fillStyle = '#ffffff'
-        ctx.fillRect(0, 0, LABEL_WIDTH_PX, currentHeight)
+        ctx.fillRect(0, 0, LABEL_WIDTH_PX, LABEL_HEIGHT_PX)
 
         const availableWidth = LABEL_WIDTH_PX - PADDING_X * 2
         let cursorY = 50
@@ -84,11 +78,17 @@ export function generateCredentialImage(data: CredentialData): Promise<string> {
         // Separación perfecta
         cursorY += 25
 
-        // --- Empresa: gris oscuro (#555555) ideal para crear un patrón de 'dithering' en la impresora Brother
+        // --- Organización (Equivalente a empresa): gris oscuro (#555555) ideal para dithering ---
+        const orgText = data.organization || 'AUTORIDAD ACREDITADA'
         ctx.font = 'bold 24px Arial, sans-serif'
         ctx.fillStyle = '#555555'
-        ctx.fillText(data.company.toUpperCase(), PADDING_X, cursorY, availableWidth)
-        cursorY += 36
+        const orgLines = wrapText(ctx, orgText.toUpperCase(), availableWidth)
+        orgLines.forEach(line => {
+            ctx.fillText(line, PADDING_X, cursorY)
+            cursorY += 30
+        })
+
+        cursorY += 6
 
         // --- Línea separadora full-width ---
         cursorY += 14
@@ -98,27 +98,36 @@ export function generateCredentialImage(data: CredentialData): Promise<string> {
         ctx.moveTo(PADDING_X, cursorY)
         ctx.lineTo(LABEL_WIDTH_PX - PADDING_X, cursorY)
         ctx.stroke()
-        cursorY += 24
+        cursorY += 30
 
-        // --- QR Code: centrado, ocupa el espacio restante ---
-        if (withQR) {
-            const qrImage = new Image()
-            qrImage.onload = () => {
-                // QR izquierda (PADDING_X), 5% más grande (factor 0.80 del espacio disponible)
-                const remainingHeight = currentHeight - cursorY - 20
-                const qrSize = Math.min(remainingHeight, availableWidth) * 0.80
-                const qrX = PADDING_X
+        // --- Cargo (Position): Grande, ocupa el lugar del QR ---
+        // Le damos un aspecto importante ya que es la característica clave de la autoridad
+        ctx.fillStyle = '#000000'
 
-                ctx.drawImage(qrImage, qrX, cursorY, qrSize, qrSize)
+        let positionFontSize = 60
+        ctx.font = `900 ${positionFontSize}px Arial, sans-serif`
 
-                resolve(canvas.toDataURL('image/png'))
-            }
+        // Ajustamos dinámicamente el tamaño de fuente si el cargo es muy largo
+        // Asegurando que se aproveche el espacio sobrante
+        let positionLines = wrapText(ctx, data.position.toUpperCase(), availableWidth)
 
-            qrImage.onerror = () => reject(new Error('Error al cargar la imagen del QR en el canvas'))
-            qrImage.src = data.qrBase64
-        } else {
-            // Sin QR, terminamos aquí
-            resolve(canvas.toDataURL('image/png'))
+        // Si hay muchas líneas, bajamos un poco la fuente
+        if (positionLines.length > 3) {
+            positionFontSize = 45
+            ctx.font = `900 ${positionFontSize}px Arial, sans-serif`
+            positionLines = wrapText(ctx, data.position.toUpperCase(), availableWidth)
+        } else if (positionLines.length > 2) {
+            positionFontSize = 50
+            ctx.font = `900 ${positionFontSize}px Arial, sans-serif`
+            positionLines = wrapText(ctx, data.position.toUpperCase(), availableWidth)
         }
+
+        const positionLineHeight = positionFontSize * 1.1
+
+        positionLines.forEach((line) => {
+            ctx.fillText(line, PADDING_X, cursorY)
+            cursorY += positionLineHeight
+        })
+        resolve(canvas.toDataURL('image/png'))
     })
 }
