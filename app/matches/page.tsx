@@ -68,12 +68,20 @@ export default async function MatchesDashboard() {
                             <Zap className="w-8 h-8 opacity-20" strokeWidth={1} />
                         </div>
                         <div className="flex flex-col gap-4 mt-8">
-                            {Object.entries(connectionTypesCount).map(([type, count]) => (
-                                <div key={type} className="flex justify-between items-baseline border-b border-black/5 dark:border-white/5 pb-2 last:border-0 last:pb-0">
-                                    <span className="font-mono text-xs font-bold tracking-widest uppercase opacity-70">{type}</span>
-                                    <span className="font-black text-4xl tracking-tighter text-purple-500/70 dark:text-purple-400/70 transition-colors">{count as number}</span>
-                                </div>
-                            ))}
+                            {Object.entries(connectionTypesCount).map(([type, count]) => {
+                                const percentage = totalMatches > 0 ? Math.round(((count as number) / totalMatches) * 100) : 0;
+                                return (
+                                    <div key={type} className="flex justify-between items-baseline border-b border-black/5 dark:border-white/5 pb-2 last:border-0 last:pb-0 group/stat">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono text-xs font-bold tracking-widest uppercase opacity-70">{type}</span>
+                                            <span className="font-mono text-[10px] tracking-widest opacity-0 group-hover/stat:opacity-40 transition-opacity" title="Volumen bruto">({count as number})</span>
+                                        </div>
+                                        <span className="font-black text-4xl tracking-tighter text-purple-500/70 dark:text-purple-400/70 transition-colors">
+                                            {percentage}<span className="text-xl opacity-50">%</span>
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
