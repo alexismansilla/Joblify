@@ -106,47 +106,44 @@ export default async function MatchesDashboard() {
                                 <tbody className="divide-y divide-black/10 dark:divide-white/10">
                                     {sortedTopReport.map((user: any) => (
                                         <tr key={user.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
-                                            <td className="px-6 py-8 w-1/3 align-top border-r border-transparent transition-colors">
-                                                <div className="flex flex-col gap-2">
-                                                    <span className="font-black text-2xl uppercase tracking-tighter">{user.name}</span>
-                                                    <span className="text-xs font-mono tracking-widest uppercase opacity-50">{user.email || user.phone}</span>
+                                            <td className="px-4 py-4 w-1/3 align-top border-r border-transparent transition-colors">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="font-black text-xl uppercase tracking-tighter">{user.name}</span>
+                                                    <span className="text-[10px] font-mono tracking-widest uppercase opacity-50">{user.email || user.phone}</span>
                                                     {user.company && (
-                                                        <span className="inline-block mt-4 px-3 py-1 bg-black/5 dark:bg-white/5 text-xs font-bold uppercase tracking-widest w-fit border border-black/10 dark:border-white/10">
+                                                        <span className="inline-block mt-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 text-[10px] font-bold uppercase tracking-widest w-fit border border-black/10 dark:border-white/10">
                                                             {user.company}
                                                         </span>
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-8 text-center w-1/4 align-top border-r border-transparent transition-colors">
-                                                <div className="inline-flex flex-col items-center justify-center pt-2">
-                                                    <span className={`text-6xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70 transition-colors ${user.matches.length > 0 ? '' : 'opacity-20'}`}>
+                                            <td className="px-4 py-4 text-center w-1/4 align-top border-r border-transparent transition-colors">
+                                                <div className="inline-flex flex-col items-center justify-center">
+                                                    <span className={`text-5xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70 transition-colors ${user.matches.length > 0 ? '' : 'opacity-20'}`}>
                                                         {user.matches.length}
                                                     </span>
-                                                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest mt-3 opacity-50">MATCH REGISTRADOS</span>
+                                                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest mt-2 opacity-50">MATCH REGISTRADOS</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-8 align-top">
-                                                <div className="flex flex-col gap-3">
+                                            <td className="px-4 py-4 align-top">
+                                                <div className="flex flex-col gap-1.5">
                                                     {user.matches.length > 0 ? (
                                                         user.matches.slice(0, 5).map((match: any) => (
-                                                            <div key={match.id} className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-                                                                <div className="flex items-center gap-3">
+                                                            <div key={match.id} className="flex items-center justify-between px-3 py-1.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                                                                <div className="flex items-center gap-2">
                                                                     {match.scanner ? (
-                                                                        <div className="w-8 h-8 bg-black dark:bg-white flex items-center justify-center text-xs font-bold text-white dark:text-black font-mono">
+                                                                        <div className="w-6 h-6 bg-black dark:bg-white flex items-center justify-center text-[10px] font-bold text-white dark:text-black font-mono">
                                                                             {match.scanner.name.charAt(0)}
                                                                         </div>
                                                                     ) : (
-                                                                        <div className="w-8 h-8 border border-black/20 dark:border-white/20 flex items-center justify-center text-xs font-bold opacity-50 font-mono">
+                                                                        <div className="w-6 h-6 border border-black/20 dark:border-white/20 flex items-center justify-center text-[10px] font-bold opacity-50 font-mono">
                                                                             ?
                                                                         </div>
                                                                     )}
-                                                                    <span className="font-bold text-sm tracking-tight uppercase">
+                                                                    <span className="font-bold text-xs tracking-tight uppercase">
                                                                         {match.scanner ? match.scanner.name : (match.scanner_phone || 'NO IDENTIFICADO')}
                                                                     </span>
                                                                 </div>
-                                                                <span className="text-[10px] font-mono tracking-widest opacity-60">
-                                                                    {new Date(match.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
                                                             </div>
                                                         ))
                                                     ) : (
