@@ -71,20 +71,49 @@ export const contactService = {
     },
 
     async getByIdentifier(identifier: string) {
-        // Limpiamos la entrada para evitar problemas con ruts o puntos
-        const cleanIdentifier = identifier.replace(/[^0-9kK]/g, '').toUpperCase();
-        const formattedIdentifier = cleanIdentifier.length > 1
-            ? `${cleanIdentifier.slice(0, -1)}-${cleanIdentifier.slice(-1)}`
-            : cleanIdentifier;
+        // 1. Variantes para RUT
+        const cleanRutIdentifier = identifier.replace(/[^0-9kK]/g, '').toUpperCase();
+        const formattedRutIdentifier = cleanRutIdentifier.length > 1
+            ? `${cleanRutIdentifier.slice(0, -1)}-${cleanRutIdentifier.slice(-1)}`
+            : cleanRutIdentifier;
 
-        // Preparamos variantes posibles del teléfono (con y sin +)
-        const phoneWithPlus = identifier.startsWith('+') ? identifier : `+${identifier}`;
-        const phoneWithoutPlus = identifier.startsWith('+') ? identifier.substring(1) : identifier;
+        // 2. Variantes robustas para el Teléfono
+        const digitsOnly = identifier.replace(/[^0-9]/g, '');
+        
+        let orQueryParts = [
+            `email.eq.${identifier}`,
+            `rut.eq.${identifier}`,
+            `rut.eq.${cleanRutIdentifier}`,
+            `rut.eq.${formattedRutIdentifier}`
+        ];
+
+        // Añadimos el original por defecto
+        orQueryParts.push(`phone.eq.${identifier}`);
+
+        if (digitsOnly) {
+            orQueryParts.push(`phone.eq.${digitsOnly}`);
+            orQueryParts.push(`phone.eq.+${digitsOnly}`);
+            
+            // Si parece ser un número chileno con prefijo 56 (11 dígitos, ej: 56912345678)
+            if (digitsOnly.length === 11 && digitsOnly.startsWith('56')) {
+                const localPhone = digitsOnly.substring(2); // Extrae el 912345678
+                orQueryParts.push(`phone.eq.${localPhone}`);
+                orQueryParts.push(`phone.eq.+56${localPhone}`);
+            }
+            // Si el texto entrante ya era el formato corto de 9 dígitos (ej: 912345678)
+            else if (digitsOnly.length === 9) {
+                orQueryParts.push(`phone.eq.56${digitsOnly}`);
+                orQueryParts.push(`phone.eq.+56${digitsOnly}`);
+            }
+        }
+
+        const orQueryString = orQueryParts.join(',');
 
         const { data, error } = await supabase
             .from('contacts')
             .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token')
-            .or(`email.eq.${identifier},phone.eq.${identifier},phone.eq.${phoneWithPlus},phone.eq.${phoneWithoutPlus},rut.eq.${identifier},rut.eq.${cleanIdentifier},rut.eq.${formattedIdentifier}`)
+            .or(orQueryString)
+            .limit(1)
             .maybeSingle();
 
         if (error) throw error;
