@@ -141,7 +141,7 @@ export default async function MatchesDashboard() {
                                                                         </div>
                                                                     )}
                                                                     <span className="font-bold text-sm tracking-tight uppercase">
-                                                                        {match.scanner ? match.scanner.name : 'NO IDENTIFICADO'}
+                                                                        {match.scanner ? match.scanner.name : (match.scanner_phone || 'NO IDENTIFICADO')}
                                                                     </span>
                                                                 </div>
                                                                 <span className="text-[10px] font-mono tracking-widest opacity-60">

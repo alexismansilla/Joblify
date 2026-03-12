@@ -71,16 +71,20 @@ export const contactService = {
     },
 
     async getByIdentifier(identifier: string) {
-        // Limpiamos la entrada para que pueda comparar independientemente de puntos o guiones
+        // Limpiamos la entrada para evitar problemas con ruts o puntos
         const cleanIdentifier = identifier.replace(/[^0-9kK]/g, '').toUpperCase();
         const formattedIdentifier = cleanIdentifier.length > 1
             ? `${cleanIdentifier.slice(0, -1)}-${cleanIdentifier.slice(-1)}`
             : cleanIdentifier;
 
+        // Preparamos variantes posibles del teléfono (con y sin +)
+        const phoneWithPlus = identifier.startsWith('+') ? identifier : `+${identifier}`;
+        const phoneWithoutPlus = identifier.startsWith('+') ? identifier.substring(1) : identifier;
+
         const { data, error } = await supabase
             .from('contacts')
             .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token')
-            .or(`email.eq.${identifier},phone.eq.${identifier},rut.eq.${identifier},rut.eq.${cleanIdentifier},rut.eq.${formattedIdentifier}`)
+            .or(`email.eq.${identifier},phone.eq.${identifier},phone.eq.${phoneWithPlus},phone.eq.${phoneWithoutPlus},rut.eq.${identifier},rut.eq.${cleanIdentifier},rut.eq.${formattedIdentifier}`)
             .maybeSingle();
 
         if (error) throw error;
@@ -172,6 +176,7 @@ export const contactService = {
           id,
           created_at,
           scanner_id,
+          scanner_phone,
           connection_type,
           scanner:contacts!matches_scanner_id_fkey (
             id,
