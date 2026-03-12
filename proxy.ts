@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
     const basicAuth = req.headers.get('authorization')
-    const url = req.nextUrl
 
     if (basicAuth) {
         const authValue = basicAuth.split(' ')[1]
@@ -27,7 +26,7 @@ export function middleware(req: NextRequest) {
     })
 }
 
-// Configurar el middleware para que solo actúe bajo las rutas de admin
+// Configurar el proxy para que solo actúe bajo las rutas de admin
 export const config = {
     matcher: ['/admin', '/admin/:path*'],
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Printer, Search, User, ChevronLeft, ChevronRight, Loader2, Building2 } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { Printer, Search, User, ChevronLeft, ChevronRight, Loader2, Building2, CheckCircle2, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Input } from './ui/Input'
 import { jsPDF } from 'jspdf'
@@ -15,11 +15,25 @@ interface Authority {
     organization: string | null
 }
 
+type ToastState = { message: string; type: 'success' | 'error' } | null
+
 export default function AuthorityTable({ authorities }: { authorities: Authority[] }) {
     const [loadingId, setLoadingId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
+    const [toast, setToast] = useState<ToastState>(null)
+    const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const itemsPerPage = 20
+
+    const showToast = (message: string, type: 'success' | 'error') => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+        setToast({ message, type })
+        toastTimerRef.current = setTimeout(() => setToast(null), 3000)
+    }
+
+    useEffect(() => () => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }, [])
 
     const filteredAuthorities = useMemo(() => {
         const query = searchQuery.toLowerCase().trim()
@@ -52,13 +66,11 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
             if (mode === 'PRINT') {
                 const result = await printToQZ(credentialBase64)
                 if (result.success) {
-                    alert(`✅ Credencial enviada a: ${result.printerUsed}`)
+                    showToast(`Credencial enviada a: ${result.printerUsed}`, 'success')
                     return
                 }
-                const continueWithPdf = confirm(
-                    `⚠️ No se pudo imprimir directamente:\n${result.reason}\n\n¿Descargar como PDF?`
-                )
-                if (!continueWithPdf) return
+                // Falló la impresión directa → fallback silencioso a PDF
+                showToast(`No se pudo imprimir. Descargando PDF...`, 'error')
             }
 
             // Fallback PDF. Como la imagen redujo un 30% su alto (732x512), usamos formato rectangular apaisado ~62x43mm
@@ -67,7 +79,7 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
             doc.save(`Autoridad_${authority.name.replace(/\s+/g, '_')}.pdf`)
         } catch (error) {
             console.error('Error al imprimir credencial de autoridad:', error)
-            alert('Error al generar la credencial')
+            showToast('Error al generar la credencial', 'error')
         } finally {
             setLoadingId(null)
         }
@@ -75,6 +87,24 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
 
     return (
         <div className="w-full flex flex-col gap-6">
+            {/* Toast de notificación — esquina inferior derecha, sin bloquear UI */}
+            <motion.div
+                key={toast?.message ?? 'empty'}
+                initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                animate={toast ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.96 }}
+                transition={{ duration: 0.2 }}
+                aria-live="polite"
+                className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 shadow-xl border font-mono text-[11px] font-bold tracking-widest uppercase pointer-events-none ${
+                    toast?.type === 'success'
+                        ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                        : 'bg-red-600 text-white border-red-600'
+                }`}
+            >
+                {toast?.type === 'success'
+                    ? <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    : <XCircle className="w-4 h-4 shrink-0" />}
+                {toast?.message}
+            </motion.div>
             {/* Buscador */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <Input
