@@ -2,7 +2,7 @@
  * Normaliza un teléfono chileno al formato internacional E.164: +569XXXXXXXX
  * Acepta: "56938997919", "938997919", "+56938997919", "9 3899 7919", etc.
  */
-function normalizeChileanPhone(rawPhone: string): string {
+export function normalizeChileanPhone(rawPhone: string): string {
     const digitsOnly = rawPhone.replace(/\D/g, '')
     if (digitsOnly.startsWith('56')) return `+${digitsOnly}`
     if (digitsOnly.startsWith('9') && digitsOnly.length === 9) return `+56${digitsOnly}`
