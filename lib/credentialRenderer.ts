@@ -15,7 +15,7 @@ interface CredentialData {
  * Divide un texto en líneas que no excedan el ancho máximo disponible en el canvas.
  * Necesario para hacer text-wrap manual en canvas 2D.
  */
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
     const words = text.split(' ')
     const lines: string[] = []
     let currentLine = words[0]

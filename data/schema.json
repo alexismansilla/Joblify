@@ -1,0 +1,25 @@
+{
+  "contacts": {
+    "required": ["nombres"],
+    "optional": ["apellidos", "email", "teléfono", "rut", "empresa", "cargo"],
+    "valid_headers": {
+      "first_name": ["nombres", "nombre", "first name", "first_name", "name"],
+      "last_name": ["apellidos", "apellido", "last name", "last_name"],
+      "email": ["e-mail", "email", "correo"],
+      "phone": ["teléfono móvil", "telefono movil", "teléfono", "telefono", "phone"],
+      "rut": ["rut/dni/pasaporte", "rut", "dni", "pasaporte", "identification_number"],
+      "company": ["empresa u organización", "empresa u organizacion", "empresa", "organización", "organizacion", "company"],
+      "position": ["cargo", "position", "puesto"]
+    }
+  },
+  "authorities": {
+    "required": ["nombre"],
+    "optional": ["apellido", "cargo", "organización"],
+    "valid_headers": {
+      "first_name": ["nombre", "nombres", "name"],
+      "last_name": ["apellido", "apellidos", "last name"],
+      "position": ["cargo", "position"],
+      "organization": ["organización", "organizacion", "organization", "empresa"]
+    }
+  }
+}

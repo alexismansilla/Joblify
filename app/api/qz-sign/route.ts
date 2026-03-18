@@ -29,9 +29,7 @@ export async function POST(req: NextRequest) {
         )
     }
 
-    // Las PEM keys en .env se almacenan con \n literales; las convertimos a saltos de línea reales
-    const privateKeyPemNormalized = privateKeyPem.replace(/\\n/g, '\n')
-    const privateKey = crypto.createPrivateKey(privateKeyPemNormalized)
+    const privateKey = crypto.createPrivateKey(privateKeyPem)
     const sign = crypto.createSign('SHA512')
     sign.update(toSign)
     sign.end()

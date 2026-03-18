@@ -28,9 +28,8 @@ export default function ConnectPage({ params }: Props) {
     const handleConnect = async () => {
         setIsConnecting(true)
 
-        // Registrar el match (si hay un ID guardado en localStorage se usa, si no, null)
-        const savedId = localStorage.getItem('connectify_user_id')
-        await registerMatch(id, savedId || undefined)
+        // scanner_id ya no se persiste; se registra el match sin identificar al escaneador
+        await registerMatch(id, undefined)
 
         // Redirigir a WhatsApp
         if (contact) {

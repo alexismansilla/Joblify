@@ -1,57 +1,38 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { findContactByIdentifier, getContactById } from '@/app/actions/contacts'
-import { User, LogOut, Loader2, Smartphone } from 'lucide-react'
+import { useState } from 'react'
+import { findContactByIdentifier } from '@/app/actions/contacts'
+import { User, LogOut, Loader2 } from 'lucide-react'
 import { Input } from './ui/Input'
-
 
 export default function IdentityStatus() {
     const [user, setUser] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [identifier, setIdentifier] = useState('')
     const [checking, setChecking] = useState(false)
-
-    const checkIdentity = async () => {
-        const savedId = localStorage.getItem('connectify_user_id')
-        if (savedId) {
-            // ✅ Fix: Using Server Action instead of direct DB access
-            const data = await getContactById(savedId);
-
-            if (data) setUser(data)
-            else localStorage.removeItem('connectify_user_id')
-        }
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        checkIdentity()
-    }, [])
+    const [loginError, setLoginError] = useState(false)
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setChecking(true)
+        setLoginError(false)
+
         const foundUser = await findContactByIdentifier(identifier)
 
         if (foundUser) {
-            localStorage.setItem('connectify_user_id', foundUser.id)
             setUser(foundUser)
+            setIdentifier('')
             setIsModalOpen(false)
-            window.location.reload()
         } else {
-            alert('Contacto no encontrado en la base de datos.')
+            setLoginError(true)
         }
+
         setChecking(false)
     }
 
     const logout = () => {
-        localStorage.removeItem('connectify_user_id')
         setUser(null)
-        window.location.reload()
     }
-
-    if (loading) return null
 
     if (!user) {
         return (
@@ -80,9 +61,17 @@ export default function IdentityStatus() {
                                         placeholder="Ej: 912345678"
                                         autoFocus
                                         value={identifier}
-                                        onChange={(e) => setIdentifier(e.target.value)}
+                                        onChange={(e) => {
+                                            setIdentifier(e.target.value)
+                                            setLoginError(false)
+                                        }}
                                         required
                                     />
+                                    {loginError && (
+                                        <p className="font-mono text-[10px] uppercase tracking-widest text-red-600 dark:text-red-400">
+                                            ✗ Contacto no encontrado en la base de datos.
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="flex flex-col gap-4">
                                     <button
@@ -97,7 +86,11 @@ export default function IdentityStatus() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setIsModalOpen(false)}
+                                        onClick={() => {
+                                            setIsModalOpen(false)
+                                            setLoginError(false)
+                                            setIdentifier('')
+                                        }}
                                         className="w-full py-4 bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white font-mono text-[10px] font-bold uppercase tracking-widest hover:opacity-50 transition-opacity"
                                     >
                                         ABORTAR

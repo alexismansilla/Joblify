@@ -7,7 +7,7 @@ Connectify es una plataforma web para gestionar el networking en eventos profesi
 - **Carga Masiva de Contactos**: Procesamiento de archivos `.xlsx` y `.csv` con mapeo inteligente de columnas (Nombre, Email, Teléfono, RUT, Empresa, Cargo). Modo dual con ExcelJS para `.xlsx` y fallback a parser CSV.
 - **Registro Manual**: Formulario web para crear contactos individuales desde el panel de administración.
 - **Credenciales con QR**: Generación de credenciales renderizadas en Canvas (nombre con word-wrap, empresa, línea divisoria y QR opcional) en formato 62mm x 62mm para etiquetas Brother QL-800.
-- **Impresión Térmica Directa**: Integración con **QZ Tray** mediante WebSocket con autenticación RSA SHA-512 (challenge-response). Detección automática de impresora Brother QL-800. Fallback a descarga PDF via jsPDF si la impresora no está disponible.
+- **Impresión Térmica Directa**: Integración con **QZ Tray** mediante WebSocket con autenticación RSA SHA-512 (challenge-response). Detección automática de impresora Brother QL-800. [Ver guía de configuración en Windows](./DOCS_QZ_WINDOWS.md).
 - **Integración WhatsApp Business API**: Webhook que recibe mensajes entrantes, extrae tokens QR del formato `@XXXXXXXX`, crea registros de match, y envía mensajes interactivos con botones para clasificar la conexión (Negocio / Mentoría / Casual). Incluye envío de tarjeta de contacto (vCard).
 - **Dashboard de Matches**: Analítica en tiempo real con volumen total de conexiones, tasa de identificación, distribución por tipo de conexión (porcentajes con conteo al hacer hover), top 10 perfiles más conectados, e historial de actividad por usuario.
 - **Gestión de Autoridades**: Tabla separada para VIPs, speakers y organizadores con carga masiva desde Excel y credenciales diferenciadas.
@@ -37,6 +37,7 @@ Connectify es una plataforma web para gestionar el networking en eventos profesi
 | [jspdf](https://github.com/parallax/jsPDF) | Generación de PDF como fallback de impresión |
 | [framer-motion](https://www.framer.com/motion/) | Animaciones |
 | [lucide-react](https://lucide.dev/) | Iconos |
+| [vitest](https://vitest.dev/) | Testing unitario e integración |
 
 ---
 
@@ -62,6 +63,7 @@ connectify/
 │   │   ├── FileUpload.tsx              # Carga de archivos Excel
 │   │   ├── ContactTable.tsx            # Tabla paginada de contactos con búsqueda
 │   │   ├── AuthorityTable.tsx          # Tabla de autoridades
+│   │   ├── AuthorityFileUpload.tsx     # Carga de archivos Excel para autoridades
 │   │   ├── IdentityStatus.tsx          # Badge de identidad del usuario
 │   │   ├── AdminNavbar.tsx             # Navegación admin compartida
 │   │   └── ui/Input.tsx                # Componente input reutilizable
@@ -77,52 +79,59 @@ connectify/
 │       ├── contactService.ts           # Queries de contactos
 │       ├── whatsappService.ts          # Integración WhatsApp API
 │       └── authorityService.ts         # Queries de autoridades
-├── public/
-│   └── digital-certificate.txt         # Certificado público QZ Tray
 ├── certificates/                       # Certificados locales QZ Tray
-└── scripts/                            # Scripts utilitarios
+└── public/
+    └── digital-certificate.txt         # Certificado público QZ Tray
 ```
 
 ---
 
-## Arquitectura de Datos (Supabase)
+## Arquitectura de Datos (Supabase / PostgreSQL)
 
-### Tabla `contacts`
+```mermaid
+erDiagram
+    contacts ||--o{ matches : "es escaneado en"
+    contacts ||--o{ matches : "escanea como scanner"
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | UUID, PK | Identificador único |
-| `name` | Text | Nombre completo |
-| `first_name` | Text, nullable | Nombre |
-| `last_name` | Text, nullable | Apellido |
-| `email` | Text, nullable | Correo electrónico |
-| `phone` | Text, nullable | Teléfono (usado para WhatsApp) |
-| `rut` | Text, nullable | RUT / DNI / Pasaporte |
-| `company` | Text, nullable | Empresa |
-| `position` | Text, nullable | Cargo |
-| `qr_token` | Text, UNIQUE | Token QR auto-generado (8-10 caracteres, con detección de colisiones) |
-| `created_at` | Timestamp | Fecha de registro |
+    contacts {
+        uuid id PK
+        text name "Nombre completo"
+        text first_name "Nombre (nullable)"
+        text last_name "Apellido (nullable)"
+        text email "Correo (nullable)"
+        text phone "Teléfono / WhatsApp (nullable)"
+        text rut "RUT / DNI / Pasaporte (nullable)"
+        text company "Empresa (nullable)"
+        text position "Cargo (nullable)"
+        text qr_token UK "Token QR auto-generado (8-10 chars)"
+        timestamp created_at
+    }
 
-### Tabla `matches`
+    matches {
+        uuid id PK
+        uuid contact_id FK "Dueño del QR escaneado"
+        uuid scanner_id FK "Quién escaneó (nullable)"
+        text scanner_phone "Teléfono del scanner (nullable)"
+        text connection_type "negocio | mentoria | casual (nullable)"
+        timestamp created_at
+    }
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | UUID, PK | Identificador del match |
-| `contact_id` | UUID, FK → contacts | Dueño del QR escaneado |
-| `scanner_id` | UUID, FK → contacts, nullable | Quién escaneó (null si anónimo) |
-| `scanner_phone` | Text, nullable | Teléfono del scanner (fallback si no está identificado) |
-| `connection_type` | Text, nullable | Clasificación: `negocio`, `mentoria`, `casual` |
-| `created_at` | Timestamp | Fecha y hora de la conexión |
+    authorities {
+        uuid id PK
+        text name "Nombre completo"
+        text position "Cargo (nullable)"
+        text organization "Organización (nullable)"
+        timestamp created_at
+    }
+```
 
-### Tabla `authorities`
+### Relaciones clave
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | UUID, PK | Identificador único |
-| `name` | Text | Nombre completo |
-| `position` | Text, nullable | Cargo |
-| `organization` | Text, nullable | Organización |
-| `created_at` | Timestamp | Fecha de registro |
+- **`matches.contact_id`** → `contacts.id`: El contacto cuyo QR fue escaneado.
+- **`matches.scanner_id`** → `contacts.id` (nullable): Quién escaneó. `null` si el scanner es anónimo (no está en la base de contactos).
+- **`matches.scanner_phone`**: Fallback de identificación cuando `scanner_id` es null. Se obtiene del número de WhatsApp entrante.
+- **`contacts.qr_token`**: Generado automáticamente por la DB con constraint UNIQUE y reintentos en caso de colisión.
+- **`authorities`**: Tabla independiente sin FK a otras tablas. Almacena VIPs, speakers y organizadores con credenciales diferenciadas.
 
 ---
 
@@ -165,6 +174,28 @@ connectify/
 
 - `NEXT_PUBLIC_QR_OUTPUT_MODE=PRINT`: Imprime via QZ Tray; si falla, ofrece PDF.
 - `NEXT_PUBLIC_QR_OUTPUT_MODE=PDF`: Descarga directamente el PDF.
+
+---
+
+## Testing
+
+Tests unitarios y de integración con **Vitest**. Los test files están co-ubicados junto a su código fuente.
+
+```bash
+npm test          # Ejecutar todos los tests
+npm run test:watch # Modo watch
+```
+
+**Cobertura de tests:**
+
+| Archivo | Tests | Tipo |
+|---------|-------|------|
+| `lib/services/whatsappService.test.ts` | 8 | Normalización de teléfonos chilenos |
+| `lib/services/contactService.test.ts` | 10 | Búsqueda por identificador (mock Supabase) |
+| `lib/services/whatsappService.integration.test.ts` | 6 | Envío de contact card (mock fetch) |
+| `app/api/whatsapp/webhook/route.test.ts` | 17 | Webhook GET/POST handlers |
+| `app/actions/contacts.test.ts` | 30 | Parsing CSV/Excel, mapeo de columnas |
+| `lib/credentialRenderer.test.ts` | 7 | Word-wrap de texto en canvas |
 
 ---
 
