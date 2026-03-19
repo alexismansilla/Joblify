@@ -89,6 +89,16 @@ async function processConnection(scannerPhone: string, text: string) {
     // 2. Buscamos si el escáner ya está registrado en la DB
     const scannerContact = await contactService.getByIdentifier(scannerPhone)
 
+    // MODO PRUEBA / AUTO-ESCANEO: Permite al usuario jugar con el bot sin ensuciar métricas
+    if (scannerContact && scannerContact.id === targetContact.id) {
+        console.log(`[Webhook] MODO DE PRUEBA: Auto-escaneo activado para ${scannerContact.name}`)
+        
+        // Enviamos la interfaz interactiva con un ID estático inofensivo
+        await whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, 'self-test')
+        await whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone || '')
+        return
+    }
+
     // 3. Registramos el match con el teléfono del escáner
     const matchRecord = await contactService.registerWhatsappMatch(targetContact.id, scannerContact?.id || null, scannerPhone)
 
@@ -113,6 +123,13 @@ async function processButtonReply(scannerPhone: string, buttonId: string) {
 
     if (!matchId) {
         console.error(`[DEBUG] No se pudo extraer el matchId del buttonId: ${buttonId}`)
+        return
+    }
+
+    // Respuesta interceptada y simulada para cuando jugaron con su propia credencial
+    if (matchId === 'self-test') {
+        console.log(`[DEBUG] Click de prueba detectado (${action})`)
+        await whatsappService.sendTextMessage(scannerPhone, '¡Todo funciona increíble! ✨  Efectivamente interactuaste con tu propio perfil en modo de prueba.\n\nEscanea los gafetes de otras personas para amasar conexiones reales.')
         return
     }
 
