@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic'
 export default async function MatchesDashboard() {
     const report = await getMatchesReport()
 
-    // Cálculos de métricas
-    const totalMatches = report.reduce((acc: any, user: any) => acc + user.matches.length, 0);
-    const identifiedMatches = report.reduce((acc: any, user: any) => acc + user.matches.filter((m: any) => m.scanner_id).length, 0);
-    const identityRate = totalMatches > 0 ? Math.round((identifiedMatches / totalMatches) * 100) : 0;
+    // Cálculos de métricas de Adopción
+    const totalAttendees = report.length;
+    const activeAttendees = report.filter((user: any) => user.matches && user.matches.length > 0).length;
+    const adoptionRate = totalAttendees > 0 ? Math.round((activeAttendees / totalAttendees) * 100) : 0;
+    const totalMatches = report.reduce((acc: any, user: any) => acc + (user.matches ? user.matches.length : 0), 0);
 
     const connectionTypesCount = report.reduce((acc: Record<string, number>, user: any) => {
         user.matches.forEach((m: any) => {
@@ -21,6 +22,7 @@ export default async function MatchesDashboard() {
     }, { negocio: 0, mentoria: 0, casual: 0, 'no registrado': 0 });
 
     const sortedTopReport = [...report]
+        .filter((user: any) => user.matches && user.matches.length > 0)
         .sort((a: any, b: any) => b.matches.length - a.matches.length)
         .slice(0, 10);
 
@@ -48,15 +50,20 @@ export default async function MatchesDashboard() {
                         </div>
                     </div>
 
-                    {/* Tarjeta 2 */}
+                    {/* Tarjeta 2: Tasa de Adopción (Usuarios con interacciones) */}
                     <div className="group relative p-12 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-500 flex flex-col justify-between min-h-[250px]">
                         <div className="flex justify-between items-start">
-                            <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">TASA DE IDENTIDAD VERIFICADA</p>
+                            <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">TASA DE ADOPCIÓN (PARTICIPACIÓN ACTIVA)</p>
                             <Target className="w-8 h-8 opacity-20" strokeWidth={1} />
                         </div>
-                        <div className="flex items-baseline gap-3 mt-8">
-                            <span className="text-8xl font-black tracking-tighter leading-none text-amber-500/70 dark:text-amber-400/70 transition-colors">
-                                {identityRate}<span className="text-4xl text-black/50 dark:text-white/50">%</span>
+                        <div className="flex flex-col gap-1 mt-8">
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-8xl font-black tracking-tighter leading-none text-amber-500/70 dark:text-amber-400/70 transition-colors">
+                                    {adoptionRate}<span className="text-4xl text-black/50 dark:text-white/50">%</span>
+                                </span>
+                            </div>
+                            <span className="font-mono text-[10px] tracking-widest uppercase opacity-40 mt-2">
+                                {activeAttendees} de {totalAttendees} asistentes lograron al menos 1 enlace
                             </span>
                         </div>
                     </div>
@@ -94,75 +101,82 @@ export default async function MatchesDashboard() {
                     </h3>
 
                     <div className="bg-transparent">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse min-w-[800px]">
-                                <thead>
-                                    <tr className="border-b border-black/10 dark:border-white/10">
-                                        <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50">IDENTIDAD</th>
-                                        <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50 text-center">FRECUENCIA DE ENLACE</th>
-                                        <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50">TRAZA DE ACTIVIDAD HISTÓRICA</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-black/10 dark:divide-white/10">
-                                    {sortedTopReport.map((user: any) => (
-                                        <tr key={user.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
-                                            <td className="px-4 py-4 w-1/3 align-top border-r border-transparent transition-colors">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="font-black text-xl uppercase tracking-tighter">{user.name}</span>
-                                                    <span className="text-[10px] font-mono tracking-widest uppercase opacity-50">{user.email || user.phone}</span>
-                                                    {user.company && (
-                                                        <span className="inline-block mt-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 text-[10px] font-bold uppercase tracking-widest w-fit border border-black/10 dark:border-white/10">
-                                                            {user.company}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4 text-center w-1/4 align-top border-r border-transparent transition-colors">
-                                                <div className="inline-flex flex-col items-center justify-center">
-                                                    <span className={`text-5xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70 transition-colors ${user.matches.length > 0 ? '' : 'opacity-20'}`}>
-                                                        {user.matches.length}
-                                                    </span>
-                                                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest mt-2 opacity-50">MATCH REGISTRADOS</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4 align-top">
-                                                <div className="flex flex-col gap-1.5">
-                                                    {user.matches.length > 0 ? (
-                                                        user.matches.slice(0, 5).map((match: any) => (
-                                                            <div key={match.id} className="flex items-center justify-between px-3 py-1.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-                                                                <div className="flex items-center gap-2">
-                                                                    {match.scanner ? (
-                                                                        <div className="w-6 h-6 bg-black dark:bg-white flex items-center justify-center text-[10px] font-bold text-white dark:text-black font-mono">
-                                                                            {match.scanner.name.charAt(0)}
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="w-6 h-6 border border-black/20 dark:border-white/20 flex items-center justify-center text-[10px] font-bold opacity-50 font-mono">
-                                                                            ?
-                                                                        </div>
-                                                                    )}
-                                                                    <span className="font-bold text-xs tracking-tight uppercase">
-                                                                        {match.scanner ? match.scanner.name : (match.scanner_phone || 'NO IDENTIFICADO')}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="h-full py-6 flex items-center text-xs font-mono uppercase tracking-widest opacity-40">
-                                                            [ VACÍO ] NO SE ENCONTRÓ ACTIVIDAD
-                                                        </div>
-                                                    )}
-                                                    {user.matches.length > 5 && (
-                                                        <div className="text-center w-full py-3 border border-dashed border-black/20 dark:border-white/20 text-[10px] font-mono font-bold uppercase tracking-widest cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                                                            + {user.matches.length - 5} REGISTROS OCULTOS
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
+                        {sortedTopReport.length === 0 ? (
+                            <div className="w-full p-12 border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 flex flex-col items-center justify-center min-h-[300px]">
+                                <Users className="w-12 h-12 opacity-20 mb-4" strokeWidth={1} />
+                                <p className="font-mono text-sm tracking-widest uppercase opacity-50 text-center">NO HAY ACTIVIDAD DE MATCHES REGISTRADA</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse min-w-[800px]">
+                                    <thead>
+                                        <tr className="border-b border-black/10 dark:border-white/10">
+                                            <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50">IDENTIDAD</th>
+                                            <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50 text-center">FRECUENCIA DE ENLACE</th>
+                                            <th className="px-6 py-6 font-mono text-[10px] uppercase tracking-widest opacity-50">TRAZA DE ACTIVIDAD HISTÓRICA</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-black/10 dark:divide-white/10">
+                                        {sortedTopReport.map((user: any) => (
+                                            <tr key={user.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                                                <td className="px-4 py-4 w-1/3 align-top border-r border-transparent transition-colors">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="font-black text-xl uppercase tracking-tighter">{user.name}</span>
+                                                        <span className="text-[10px] font-mono tracking-widest uppercase opacity-50">{user.email || user.phone}</span>
+                                                        {user.company && (
+                                                            <span className="inline-block mt-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 text-[10px] font-bold uppercase tracking-widest w-fit border border-black/10 dark:border-white/10">
+                                                                {user.company}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4 text-center w-1/4 align-top border-r border-transparent transition-colors">
+                                                    <div className="inline-flex flex-col items-center justify-center">
+                                                        <span className={`text-5xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70 transition-colors ${user.matches.length > 0 ? '' : 'opacity-20'}`}>
+                                                            {user.matches.length}
+                                                        </span>
+                                                        <span className="text-[9px] font-mono font-bold uppercase tracking-widest mt-2 opacity-50">MATCH REGISTRADOS</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4 align-top">
+                                                    <div className="flex flex-col gap-1.5">
+                                                        {user.matches.length > 0 ? (
+                                                            user.matches.slice(0, 5).map((match: any) => (
+                                                                <div key={match.id} className="flex items-center justify-between px-3 py-1.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {match.scanner ? (
+                                                                            <div className="w-6 h-6 bg-black dark:bg-white flex items-center justify-center text-[10px] font-bold text-white dark:text-black font-mono">
+                                                                                {match.scanner.name.charAt(0)}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="w-6 h-6 border border-black/20 dark:border-white/20 flex items-center justify-center text-[10px] font-bold opacity-50 font-mono">
+                                                                                ?
+                                                                            </div>
+                                                                        )}
+                                                                        <span className="font-bold text-xs tracking-tight uppercase">
+                                                                            {match.scanner ? match.scanner.name : (match.scanner_phone || 'NO IDENTIFICADO')}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <div className="h-full py-6 flex items-center text-xs font-mono uppercase tracking-widest opacity-40">
+                                                                [ VACÍO ] NO SE ENCONTRÓ ACTIVIDAD
+                                                            </div>
+                                                        )}
+                                                        {user.matches.length > 5 && (
+                                                            <div className="text-center w-full py-3 border border-dashed border-black/20 dark:border-white/20 text-[10px] font-mono font-bold uppercase tracking-widest cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                                                                + {user.matches.length - 5} REGISTROS OCULTOS
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
