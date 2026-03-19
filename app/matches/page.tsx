@@ -43,9 +43,14 @@ export default async function MatchesDashboard() {
                             <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">VOLUMEN DE CONEXIONES Y ENLACES</p>
                             <Users className="w-8 h-8 opacity-20" strokeWidth={1} />
                         </div>
-                        <div className="flex items-baseline gap-3 mt-8">
-                            <span className="text-8xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70 transition-colors">
-                                {totalMatches}
+                        <div className="flex flex-col gap-1 mt-8">
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-8xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70 transition-colors">
+                                    {totalMatches}
+                                </span>
+                            </div>
+                            <span className="font-mono text-[10px] tracking-widest uppercase opacity-40 mt-2">
+                                INTERACCIONES TOTALES ACUMULADAS EN LA RED
                             </span>
                         </div>
                     </div>
