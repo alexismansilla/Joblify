@@ -26,7 +26,8 @@ export function proxy(req: NextRequest) {
     })
 }
 
-// Configurar el proxy para que solo actúe bajo las rutas de admin
+// Configurar el proxy para que actúe sobre las rutas restringidas, 
+// dejando el Home principal (/) y los webhooks de Meta públicos y sin contraseña.
 export const config = {
-    matcher: ['/admin', '/admin/:path*'],
+    matcher: ['/admin', '/admin/:path*', '/matches'],
 }
