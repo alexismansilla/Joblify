@@ -1,3 +1,5 @@
+import { buildProfileMessageText } from '../templates/whatsappTemplates'
+
 /**
  * Normaliza un teléfono chileno al formato internacional E.164: +569XXXXXXXX
  * Acepta: "56938997919", "938997919", "+56938997919", "9 3899 7919", etc.
@@ -22,7 +24,7 @@ export const whatsappService = {
         const endpoint = `https://graph.facebook.com/v18.0/${phoneId}/messages`
 
         // Format the profile message text
-        const messageText = `👤 *Nombre:* ${contact.name}\n📱 *Teléfono:* ${contact.phone || 'N/A'}\n💼 *Empresa:* ${contact.company || 'N/A'}\n\n¿Cómo clasificarías esta conexión?`
+        const messageText = buildProfileMessageText(contact)
 
         const payload = {
             messaging_product: "whatsapp",
@@ -39,7 +41,7 @@ export const whatsappService = {
                             type: "reply",
                             reply: {
                                 id: `negocio_${matchId}`,
-                                title: "💼 Negocio"
+                                title: "💼 Negocio o Inversión"
                             }
                         },
                         {
