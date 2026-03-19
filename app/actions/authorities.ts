@@ -77,7 +77,7 @@ async function parseAuthoritiesSpreadsheet(buffer: ArrayBuffer) {
     return parseCsvToAuthorities(text)
 }
 
-function parseCsvToAuthorities(text: string) {
+export function parseCsvToAuthorities(text: string) {
     const firstLine = text.split(/\r?\n/)[0] ?? ''
     const delimiter = firstLine.includes(';') && !firstLine.includes(',') ? ';' : ','
 
@@ -132,7 +132,7 @@ function cellToText(value: any): string {
     return String(value)
 }
 
-function mapRowToAuthority(raw: Record<string, string>) {
+export function mapRowToAuthority(raw: Record<string, string>) {
     const firstName = raw['nombre'] || raw['nombres'] || raw['name'] || ''
     const lastName = raw['apellido'] || raw['apellidos'] || raw['last name'] || ''
 

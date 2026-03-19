@@ -108,6 +108,18 @@ export function mapRowToContact(raw: Record<string, string>) {
             raw['position'] ||
             raw['puesto'] ||
             null,
+        profile:
+            raw['elige tu perfil'] ||
+            raw['perfil'] ||
+            raw['profile'] ||
+            null,
+        industry:
+            raw['industria'] ||
+            raw['industry'] ||
+            null,
+        sector:
+            raw['sector'] ||
+            null,
     }
 }
 

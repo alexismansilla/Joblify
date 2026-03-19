@@ -126,6 +126,21 @@ describe('mapRowToContact', () => {
         expect(mapRowToContact({ nombres: 'A', puesto: 'Dev' })!.position).toBe('Dev')
     })
 
+    it('maps profile variants', () => {
+        expect(mapRowToContact({ nombres: 'A', 'elige tu perfil': 'Inversionista' })!.profile).toBe('Inversionista')
+        expect(mapRowToContact({ nombres: 'A', perfil: 'Mentor' })!.profile).toBe('Mentor')
+        expect(mapRowToContact({ nombres: 'A', profile: 'Hacker' })!.profile).toBe('Hacker')
+    })
+
+    it('maps industry variants', () => {
+        expect(mapRowToContact({ nombres: 'A', industria: 'Tech' })!.industry).toBe('Tech')
+        expect(mapRowToContact({ nombres: 'A', industry: 'Agro' })!.industry).toBe('Agro')
+    })
+
+    it('maps sector variants', () => {
+        expect(mapRowToContact({ nombres: 'A', sector: 'Privado' })!.sector).toBe('Privado')
+    })
+
     it('sets missing optional fields to null', () => {
         const result = mapRowToContact({ nombres: 'Solo' })!
         expect(result.last_name).toBeNull()
@@ -134,6 +149,9 @@ describe('mapRowToContact', () => {
         expect(result.rut).toBeNull()
         expect(result.company).toBeNull()
         expect(result.position).toBeNull()
+        expect(result.profile).toBeNull()
+        expect(result.industry).toBeNull()
+        expect(result.sector).toBeNull()
     })
 })
 
