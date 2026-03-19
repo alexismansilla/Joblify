@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, Variants } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Printer, Check, User, Hash, Loader2, UserPlus, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Printer, Check, User, Users, Hash, Loader2, UserPlus, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { Input } from '@/app/components/ui/Input'
@@ -154,7 +154,7 @@ export default function CheckIn() {
                         </div>
 
                         {/* Right column Form */}
-                        <div className="flex-1 flex flex-col p-8 md:p-16 lg:p-24 relative z-10">
+                        <div className="flex-1 flex flex-col p-12 lg:p-16 relative z-10">
                             {/* Formulario centrado verticalmente */}
                             <div className="flex-1 flex flex-col justify-center">
                                 <motion.div variants={fadeUp} className="max-w-xl w-full mx-auto md:mx-0">
@@ -207,24 +207,35 @@ export default function CheckIn() {
                                     <span className="font-mono text-[10px] tracking-widest uppercase opacity-40">// acceso rápido</span>
                                     <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Link
+                                            href="/admin/registro-manual"
+                                            className="group inline-flex items-center justify-between gap-3 px-4 py-3 h-[60px] border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
+                                        >
+                                            <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
+                                                Registro<br />Manual
+                                            </span>
+                                            <UserPlus className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                                        </Link>
+                                        <Link
+                                            href="/admin/autoridades"
+                                            className="group inline-flex items-center justify-between gap-3 px-4 py-3 h-[60px] border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
+                                        >
+                                            <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
+                                                Lista<br />Autoridades
+                                            </span>
+                                            <ShieldCheck className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
+                                        </Link>
+                                    </div>
                                     <Link
-                                        href="/admin/registro-manual"
-                                        className="group inline-flex items-center justify-between gap-3 px-4 py-3 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
+                                        href="/admin"
+                                        className="group flex w-full items-center justify-center gap-3 px-4 py-3 h-[60px] border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
                                     >
+                                        <Users className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
                                         <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
-                                            Registro<br />Manual
+                                            VER TODOS LOS ASISTENTES
                                         </span>
-                                        <UserPlus className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
-                                    </Link>
-                                    <Link
-                                        href="/admin/autoridades"
-                                        className="group inline-flex items-center justify-between gap-3 px-4 py-3 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
-                                    >
-                                        <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
-                                            Lista<br />Autoridades
-                                        </span>
-                                        <ShieldCheck className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
                                     </Link>
                                 </div>
                             </motion.div>
