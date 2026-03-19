@@ -41,7 +41,7 @@ export const whatsappService = {
                             type: "reply",
                             reply: {
                                 id: `negocio_${matchId}`,
-                                title: "💼 Negocio o Inversión"
+                                title: "💼 Negocio"
                             }
                         },
                         {
