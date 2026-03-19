@@ -36,6 +36,22 @@ export async function uploadContacts(formData: FormData) {
 }
 
 /**
+ * Borra todos los contactos de la base de datos.
+ * Botón de emergencia para limpiar la lista.
+ */
+export async function deleteAllContacts() {
+    try {
+        await contactService.deleteAll()
+        revalidatePath('/')
+        revalidatePath('/admin')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Delete error:', error)
+        throw new Error(error.message || 'Error al borrar la base de datos')
+    }
+}
+
+/**
  * Parsea un archivo xlsx o csv y devuelve los contactos mapeados.
  * Estrategia dual: ExcelJS para xlsx, fallback a CSV nativo si no se leen celdas.
  */
@@ -176,6 +192,9 @@ export async function createContact(formData: FormData) {
     const phone = (formData.get('phone') as string)?.trim() || null
     const company = (formData.get('company') as string)?.trim() || null
     const position = (formData.get('position') as string)?.trim() || null
+    const profile = (formData.get('profile') as string)?.trim() || null
+    const industry = (formData.get('industry') as string)?.trim() || null
+    const sector = (formData.get('sector') as string)?.trim() || null
 
     if (!firstName) throw new Error('El nombre es obligatorio')
 
@@ -189,6 +208,9 @@ export async function createContact(formData: FormData) {
             phone,
             company,
             position,
+            profile,
+            industry,
+            sector,
         }])
         revalidatePath('/admin')
         return { success: true }

@@ -10,6 +10,9 @@ export interface Contact {
     rut: string | null;
     company: string | null;
     position: string | null;
+    profile: string | null;
+    industry: string | null;
+    sector: string | null;
     qr_token: string | null;
     created_at?: string;
 }
@@ -36,10 +39,19 @@ export const contactService = {
         return data || [];
     },
 
+    async deleteAll() {
+        // Ejecutamos una función RPC (Remote Procedure Call) en Supabase 
+        // configurada como SECURITY DEFINER para poder eludir las restricciones nativas de RLS al realizar purgas masivas
+        const { error } = await supabase.rpc('purge_contacts');
+
+        if (error) throw error;
+        return true;
+    },
+
     async getById(id: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
             .eq('id', id)
             .maybeSingle();
 
@@ -50,7 +62,7 @@ export const contactService = {
     async getByQrToken(qrToken: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
             .eq('qr_token', qrToken)
             .maybeSingle();
 
@@ -62,7 +74,7 @@ export const contactService = {
     async getByEmail(email: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
             .eq('email', email)
             .maybeSingle();
 
@@ -111,7 +123,7 @@ export const contactService = {
 
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
             .or(orQueryString)
             .limit(1)
             .maybeSingle();

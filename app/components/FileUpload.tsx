@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { uploadContacts } from '@/app/actions/contacts'
-import { Upload, FileUp, CheckCircle2, AlertCircle } from 'lucide-react'
+import { uploadContacts, deleteAllContacts } from '@/app/actions/contacts'
+import { Upload, FileUp, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function FileUpload() {
     const [loading, setLoading] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [result, setResult] = useState<{ success: boolean; count?: number; message?: string } | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -27,6 +28,21 @@ export default function FileUpload() {
             setResult({ success: false, message: error.message || 'Error al procesar el archivo Excel' })
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleDeleteDB = async () => {
+        if (!confirm('⚠️ Peligro: Esto borrará TODOS los contactos de la base de datos de manera permanente. ¿Estás absolutamente seguro?')) return;
+        
+        setIsDeleting(true)
+        setResult(null)
+        try {
+            await deleteAllContacts()
+            setResult({ success: true, message: 'BASE DE DATOS PURGADA EXITOSAMENTE.' })
+        } catch (error: any) {
+            setResult({ success: false, message: error.message || 'Error al intentar purgar la base de datos' })
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -76,11 +92,27 @@ export default function FileUpload() {
                     >
                         {result.success ? <CheckCircle2 className="w-6 h-6 shrink-0" /> : <AlertCircle className="w-6 h-6 shrink-0 text-red-500" />}
                         <span className={`font-mono text-xs uppercase tracking-widest ${result.success ? '' : 'text-red-500 font-bold'}`}>
-                            {result.success ? `RESULTADO: ${result.count} NODOS DESPLEGADOS EXITOSAMENTE.` : `FALLO URGENCIAL: ${result.message}`}
+                            {result.success ? (result.message || `RESULTADO: ${result.count} NODOS DESPLEGADOS EXITOSAMENTE.`) : `FALLO URGENCIAL: ${result.message}`}
                         </span>
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <div className="mt-8 pt-8 border-t border-red-500/20 flex flex-col items-center">
+                <p className="font-mono text-xs tracking-widest uppercase opacity-50 mb-4 text-red-500 text-center">Protocolo de Emergencia</p>
+                <button
+                    onClick={handleDeleteDB}
+                    disabled={loading || isDeleting}
+                    className="flex items-center gap-2 px-6 py-3 border border-red-500/50 text-red-500 font-mono text-xs uppercase tracking-widest hover:bg-red-500/10 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {isDeleting ? 'Purgando...' : (
+                        <>
+                            <Trash2 className="w-4 h-4" />
+                            Purgar Base de Datos
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
     )
 }

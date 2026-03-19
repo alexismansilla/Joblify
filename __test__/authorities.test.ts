@@ -8,7 +8,7 @@ vi.mock('next/cache', () => ({
     revalidatePath: vi.fn(),
 }))
 
-import { parseCsvToAuthorities, mapRowToAuthority } from '@/app/actions/authorities'
+import { parseCsvToAuthorities, mapRowToAuthority } from '@/app/actions/authoritiesParser'
 
 // ─── mapRowToAuthority ─────────────────────────────────────────────
 
