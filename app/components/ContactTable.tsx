@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { ExternalLink, Mail, User, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -25,17 +25,15 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 50
 
-    const filteredContacts = useMemo(() => {
-        const query = searchQuery.toLowerCase()
-        return contacts.filter(contact =>
-            contact.name.toLowerCase().includes(query) ||
-            (contact.email && contact.email.toLowerCase().includes(query)) ||
-            (contact.phone && contact.phone.toLowerCase().includes(query)) ||
-            (contact.rut && contact.rut.toLowerCase().includes(query)) ||
-            (contact.company && contact.company.toLowerCase().includes(query)) ||
-            (contact.position && contact.position.toLowerCase().includes(query))
-        )
-    }, [contacts, searchQuery])
+    const query = searchQuery.toLowerCase()
+    const filteredContacts = contacts.filter(contact =>
+        contact.name.toLowerCase().includes(query) ||
+        (contact.email && contact.email.toLowerCase().includes(query)) ||
+        (contact.phone && contact.phone.toLowerCase().includes(query)) ||
+        (contact.rut && contact.rut.toLowerCase().includes(query)) ||
+        (contact.company && contact.company.toLowerCase().includes(query)) ||
+        (contact.position && contact.position.toLowerCase().includes(query))
+    )
 
     const totalPages = Math.ceil(filteredContacts.length / itemsPerPage)
     const currentContacts = filteredContacts.slice(

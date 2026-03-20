@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Printer, Search, User, ChevronLeft, ChevronRight, Loader2, Building2, CheckCircle2, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Input } from './ui/Input'
@@ -35,15 +35,12 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }, [])
 
-    const filteredAuthorities = useMemo(() => {
-        const query = searchQuery.toLowerCase().trim()
-        if (!query) return authorities
-        return authorities.filter(a =>
-            a.name.toLowerCase().includes(query) ||
-            a.position.toLowerCase().includes(query) ||
-            (a.organization && a.organization.toLowerCase().includes(query))
-        )
-    }, [authorities, searchQuery])
+    const query = searchQuery.toLowerCase().trim()
+    const filteredAuthorities = !query ? authorities : authorities.filter(a =>
+        a.name.toLowerCase().includes(query) ||
+        a.position.toLowerCase().includes(query) ||
+        (a.organization && a.organization.toLowerCase().includes(query))
+    )
 
     const totalPages = Math.ceil(filteredAuthorities.length / itemsPerPage)
     const currentAuthorities = filteredAuthorities.slice(
