@@ -1,11 +1,14 @@
 import qz from 'qz-tray'
 
 // Nombres posibles para la impresora (separados por coma).
-// Soporte documentado para Windows 11 que suele crear "Brother QL-800 (Copia 1)" al reconectar el USB.
-// Configurable vía variable de entorno NEXT_PUBLIC_PRINTER_NAME.
-const BROTHER_PRINTER_NAMES = (
-    process.env.NEXT_PUBLIC_PRINTER_NAME || 'Brother QL-800,Brother QL-800 (Copia 1)'
-).split(',').map(n => n.trim().toLowerCase())
+// Soporte documentado para Windows 11 que suele crear "Brother QL-800 (Copiar 1)" al reconectar el USB.
+// Fusionamos los valores provistos en NEXT_PUBLIC_PRINTER_NAME con los nativos conocidos.
+const defaultPrinters = ['brother ql-800', 'brother ql-800 (copiar 1)']
+const envPrinters = process.env.NEXT_PUBLIC_PRINTER_NAME
+    ? process.env.NEXT_PUBLIC_PRINTER_NAME.split(',').map(n => n.trim().toLowerCase())
+    : []
+
+const BROTHER_PRINTER_NAMES = Array.from(new Set([...envPrinters, ...defaultPrinters]))
 
 // La QL-800 usa etiquetas DK de 62mm de ancho.
 const QL800_LABEL_WIDTH_MM = 62
