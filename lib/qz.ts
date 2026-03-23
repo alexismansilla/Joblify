@@ -1,9 +1,11 @@
 import qz from 'qz-tray'
 
-// Nombre de la impresora Brother QL-800 tal como aparece en macOS.
-// Configurable vía variable de entorno para evitar hardcodear el nombre del sistema.
-const BROTHER_PRINTER_NAME =
-    process.env.NEXT_PUBLIC_PRINTER_NAME || 'Brother QL-800'
+// Nombres posibles para la impresora (separados por coma).
+// Soporte documentado para Windows 11 que suele crear "Brother QL-800 (Copia 1)" al reconectar el USB.
+// Configurable vía variable de entorno NEXT_PUBLIC_PRINTER_NAME.
+const BROTHER_PRINTER_NAMES = (
+    process.env.NEXT_PUBLIC_PRINTER_NAME || 'Brother QL-800,Brother QL-800 (Copia 1)'
+).split(',').map(n => n.trim().toLowerCase())
 
 // La QL-800 usa etiquetas DK de 62mm de ancho.
 const QL800_LABEL_WIDTH_MM = 62
@@ -73,7 +75,10 @@ export async function printToQZ(qrBase64: string): Promise<PrintResult> {
         const rawPrinters = await qz.printers.find()
         const availablePrinters: string[] = [rawPrinters].flat()
         const matchedPrinter = availablePrinters.find(
-            (p) => p.toLowerCase().includes('brother') || p.includes(BROTHER_PRINTER_NAME)
+            (p) => {
+                const lowerName = p.toLowerCase()
+                return BROTHER_PRINTER_NAMES.some(validName => lowerName.includes(validName)) || lowerName.includes('ql-800')
+            }
         )
 
         if (!matchedPrinter) {
