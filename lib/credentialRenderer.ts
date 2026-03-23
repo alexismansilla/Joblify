@@ -68,7 +68,7 @@ export function generateCredentialImage(data: CredentialData): Promise<string> {
 
         // --- Nombre: izquierda, bold, con wrap automático ---
         const nameFontSize = 58
-        ctx.font = `900 ${nameFontSize}px Arial, sans-serif`
+        ctx.font = `900 ${nameFontSize}px "Segoe UI", Arial, sans-serif`
         ctx.fillStyle = '#000000'
         ctx.textAlign = 'left'
         ctx.textBaseline = 'top'
@@ -85,7 +85,7 @@ export function generateCredentialImage(data: CredentialData): Promise<string> {
         cursorY += 25
 
         // --- Empresa: gris oscuro (#555555) ideal para crear un patrón de 'dithering' en la impresora Brother
-        ctx.font = 'bold 24px Arial, sans-serif'
+        ctx.font = 'bold 34px "Segoe UI", Arial, sans-serif'
         ctx.fillStyle = '#555555'
         ctx.fillText(data.company.toUpperCase(), PADDING_X, cursorY, availableWidth)
         cursorY += 36
