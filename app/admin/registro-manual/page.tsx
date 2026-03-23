@@ -17,6 +17,7 @@ interface FieldConfig {
     icon: React.ReactNode
     required: boolean
     type: string
+    options?: string[]
 }
 
 const FIELDS: FieldConfig[] = [
@@ -78,10 +79,18 @@ const FIELDS: FieldConfig[] = [
         id: 'profile',
         name: 'profile',
         label: '07 // PERFIL PROFESIONAL',
-        placeholder: 'Ej: Inversionista / Conferencista',
+        placeholder: 'Selecciona Opción',
         icon: <User className="w-4 h-4" />,
         required: false,
-        type: 'text',
+        type: 'select',
+        options: [
+            'Startup o emprendedor',
+            'Gremio - Gran empresa - Corporativo',
+            'Sector Publico',
+            'Academia',
+            'Ecosistema',
+            'Publico general'
+        ]
     },
     {
         id: 'industry',
@@ -193,7 +202,7 @@ export default function RegistroManualPage() {
                                 <div key={field.id} className="space-y-2">
                                     <label
                                         htmlFor={field.id}
-                                        className="flex items-center gap-2 text-[10px] font-mono tracking-widest uppercase opacity-50"
+                                        className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest uppercase opacity-80"
                                     >
                                         {field.icon}
                                         {field.label}
@@ -201,15 +210,33 @@ export default function RegistroManualPage() {
                                             <span className="text-black dark:text-white opacity-100">*</span>
                                         )}
                                     </label>
-                                    <Input
-                                        id={field.id}
-                                        name={field.name}
-                                        type={field.type}
-                                        placeholder={field.placeholder}
-                                        required={field.required}
-                                        disabled={loading}
-                                        autoComplete="off"
-                                    />
+                                    {field.type === 'select' ? (
+                                        <select
+                                            id={field.id}
+                                            name={field.name}
+                                            required={field.required}
+                                            disabled={loading}
+                                            className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 px-4 font-mono text-sm tracking-widest uppercase transition-colors rounded-none disabled:opacity-40 cursor-pointer"
+                                            defaultValue=""
+                                        >
+                                            <option value="" disabled className="text-black/50 dark:text-white/50">{field.placeholder}</option>
+                                            {field.options?.map((opt, i) => (
+                                                <option key={i} value={opt} className="text-black bg-white dark:bg-[#050505] dark:text-white">
+                                                    {opt}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <Input
+                                            id={field.id}
+                                            name={field.name}
+                                            type={field.type}
+                                            placeholder={field.placeholder}
+                                            required={field.required}
+                                            disabled={loading}
+                                            autoComplete="off"
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </div>

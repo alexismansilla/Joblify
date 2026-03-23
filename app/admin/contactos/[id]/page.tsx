@@ -131,7 +131,7 @@ export default function ContactCredentialPage({ params }: Props) {
                 className="h-screen w-full flex flex-col md:flex-row"
             >
                 {/* ─── Panel Izquierdo: info del contacto ─── */}
-                <div className="flex-1 flex flex-col justify-between p-8 md:p-16 lg:p-24 border-b md:border-b-0 md:border-r border-black/10 dark:border-white/10 relative z-10">
+                <div className="flex-1 flex flex-col justify-between p-6 md:p-10 lg:p-16 border-b md:border-b-0 md:border-r border-black/10 dark:border-white/10 relative z-10 overflow-y-auto">
                     <motion.div variants={fadeUp}>
                         <Link
                             href="/admin"
@@ -142,13 +142,13 @@ export default function ContactCredentialPage({ params }: Props) {
                         </Link>
                     </motion.div>
 
-                    <motion.div variants={fadeUp} className="my-16 md:my-0 space-y-12">
+                    <motion.div variants={fadeUp} className="my-8 md:my-0 space-y-8 md:space-y-12 mt-8 md:mt-0">
                         <div className="space-y-4">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-black dark:bg-white text-white dark:text-black font-mono text-[10px] uppercase tracking-widest">
                                 <Check className="w-3 h-3" /> ACCESO AUTORIZADO
                             </div>
-                            {/* Nombre grande — primer token oscuro, resto gris */}
-                            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter uppercase leading-none break-words">
+                            {/* Nombre grande — Escala responiva fluida para evitar overflow vertical */}
+                            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter uppercase leading-none break-words">
                                 {contact?.name.split(' ')[0]}
                                 {contact && contact.name.split(' ').length > 1 && (
                                     <>
