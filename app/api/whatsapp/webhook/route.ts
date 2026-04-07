@@ -129,7 +129,7 @@ async function processButtonReply(scannerPhone: string, buttonId: string) {
     // Respuesta interceptada y simulada para cuando jugaron con su propia credencial
     if (matchId === 'self-test') {
         console.log(`[DEBUG] Click de prueba detectado (${action})`)
-        await whatsappService.sendTextMessage(scannerPhone, '¡Todo funciona increíble! ✨  Efectivamente interactuaste con tu propio perfil en modo de prueba.\n\nEscanea los gafetes de otras personas para amasar conexiones reales.')
+        await whatsappService.sendTextMessage(scannerPhone, '😁 Efectivamente, interactuaste con tu propio perfil en modo de prueba.\n\nTe invito a escanear los códigos QR de otras personas y hacer conexiones reales. ¡Éxito!')
         return
     }
 
