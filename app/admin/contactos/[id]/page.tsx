@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import { motion, Variants } from 'framer-motion'
-import { ArrowLeft, Check, Hash, User, Printer, Loader2 } from 'lucide-react'
+import { ArrowLeft, Check, Hash, Home, User, Printer, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { getContactById } from '@/app/actions/contacts'
@@ -181,13 +181,13 @@ export default function ContactCredentialPage({ params }: Props) {
                         </div>
                     </motion.div>
 
-                    <motion.div variants={fadeUp} className="flex flex-col gap-4 max-w-sm mt-8 md:mt-0">
+                    <motion.div variants={fadeUp} className="flex items-stretch gap-3 max-w-xl mt-8 md:mt-0">
                         <button
                             onClick={handlePrintCredential}
                             disabled={printing}
-                            className="group relative w-full inline-flex items-center justify-between gap-4 px-6 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                            className="group relative flex-1 inline-flex items-center justify-between gap-4 px-6 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                         >
-                            <span className="font-mono text-sm tracking-widest uppercase font-bold">
+                            <span className="font-mono text-sm tracking-widest uppercase font-bold whitespace-nowrap">
                                 {printing ? 'ENVIANDO...' : 'IMPRIMIR CREDENCIAL'}
                             </span>
                             {printing
@@ -195,6 +195,14 @@ export default function ContactCredentialPage({ params }: Props) {
                                 : <Printer className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
                             }
                         </button>
+
+                        <Link
+                            href="/"
+                            className="group shrink-0 inline-flex items-center gap-3 px-6 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all duration-300"
+                        >
+                            <Home className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" />
+                            <span className="font-mono text-[10px] tracking-widest uppercase font-bold whitespace-nowrap">IR AL INICIO</span>
+                        </Link>
                     </motion.div>
                 </div>
 
