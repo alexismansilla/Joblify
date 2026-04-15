@@ -2,7 +2,7 @@
 
 import { useState, useRef, useActionState } from 'react'
 import { createContact } from '@/app/actions/contacts'
-import { ArrowLeft, UserPlus, Check, AlertCircle, Loader2, User, Hash, Mail, Phone, Building2, Briefcase } from 'lucide-react'
+import { ArrowLeft, UserPlus, Check, AlertCircle, Loader2, User, Hash, Mail, Phone, Building2, Briefcase, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { Input } from '@/app/components/ui/Input'
@@ -129,7 +129,7 @@ const fadeUp = {
 export default function RegistroManualPage() {
     const formRef = useRef<HTMLFormElement>(null)
     const [loading, setLoading] = useState(false)
-    const [result, setResult] = useState<{ success: boolean; message?: string } | null>(null)
+    const [result, setResult] = useState<{ success: boolean; message?: string; contactId?: string | null } | null>(null)
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -149,8 +149,8 @@ export default function RegistroManualPage() {
         setResult(null)
 
         try {
-            await createContact(formData)
-            setResult({ success: true })
+            const { contactId } = await createContact(formData)
+            setResult({ success: true, contactId })
             formRef.current?.reset()
         } catch (error: any) {
             setResult({ success: false, message: error.message || 'Error inesperado al guardar.' })
@@ -257,9 +257,18 @@ export default function RegistroManualPage() {
                                     {result.success ? (
                                         <>
                                             <Check className="w-5 h-5 shrink-0" />
-                                            <span className="font-mono text-xs uppercase tracking-widest">
+                                            <span className="font-mono text-xs uppercase tracking-widest flex-1">
                                                 ASISTENTE REGISTRADO EXITOSAMENTE. El formulario fue limpiado para un nuevo registro.
                                             </span>
+                                            {result.contactId && (
+                                                <Link
+                                                    href={`/admin/contactos/${result.contactId}`}
+                                                    className="inline-flex items-center gap-2 shrink-0 px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-75 transition-opacity font-mono text-[10px] uppercase tracking-widest font-bold whitespace-nowrap"
+                                                >
+                                                    <ExternalLink className="w-3 h-3" />
+                                                    VER CREDENCIAL
+                                                </Link>
+                                            )}
                                         </>
                                     ) : (
                                         <>

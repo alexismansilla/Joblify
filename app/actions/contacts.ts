@@ -199,7 +199,7 @@ export async function createContact(formData: FormData) {
     if (!firstName) throw new Error('El nombre es obligatorio')
 
     try {
-        await contactService.insertMany([{
+        const inserted = await contactService.insertMany([{
             name: fullName,
             first_name: firstName,
             last_name: lastName || null,
@@ -213,7 +213,9 @@ export async function createContact(formData: FormData) {
             sector,
         }])
         revalidatePath('/admin')
-        return { success: true }
+        // Retornamos el id para que el cliente pueda navegar directo a la credencial
+        const contactId = inserted?.[0]?.id ?? null
+        return { success: true, contactId }
     } catch (error: any) {
         console.error('Error al crear contacto manual:', error)
         throw new Error(error.message || 'Error al guardar el contacto en la base de datos')
