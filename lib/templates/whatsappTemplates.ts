@@ -6,7 +6,6 @@ export interface ContactTemplateData {
     company?: string | null;
     position?: string | null;
     industry?: string | null;
-    sector?: string | null;
 }
 
 /**
@@ -22,7 +21,6 @@ export function buildProfileMessageText(contact: ContactTemplateData): string {
         `💼 *Empresa:* ${contact.company || 'N/A'}`,
         `👔 *Cargo:* ${contact.position || 'N/A'}`,
         `🏭 *Industria:* ${contact.industry || 'N/A'}`,
-        `🏢 *Sector:* ${contact.sector || 'N/A'}`,
         '',
         '¿Cómo clasificarías esta conexión?'
     ].join('\n');

@@ -12,7 +12,6 @@ export interface Contact {
     position: string | null;
     profile: string | null;
     industry: string | null;
-    sector: string | null;
     qr_token: string | null;
     created_at?: string;
 }
@@ -51,7 +50,7 @@ export const contactService = {
     async getById(id: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
             .eq('id', id)
             .maybeSingle();
 
@@ -62,7 +61,7 @@ export const contactService = {
     async getByQrToken(qrToken: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
             .eq('qr_token', qrToken)
             .maybeSingle();
 
@@ -74,7 +73,7 @@ export const contactService = {
     async getByEmail(email: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
             .eq('email', email)
             .maybeSingle();
 
@@ -123,7 +122,7 @@ export const contactService = {
 
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, sector, qr_token')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
             .or(orQueryString)
             .limit(1)
             .maybeSingle();

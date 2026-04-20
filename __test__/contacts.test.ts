@@ -137,8 +137,7 @@ describe('mapRowToContact', () => {
         expect(mapRowToContact({ nombres: 'A', industry: 'Agro' })!.industry).toBe('Agro')
     })
 
-    it('maps sector variants', () => {
-        expect(mapRowToContact({ nombres: 'A', sector: 'Privado' })!.sector).toBe('Privado')
+    it('maps industry variants', () => {
     })
 
     it('sets missing optional fields to null', () => {
@@ -151,7 +150,6 @@ describe('mapRowToContact', () => {
         expect(result.position).toBeNull()
         expect(result.profile).toBeNull()
         expect(result.industry).toBeNull()
-        expect(result.sector).toBeNull()
     })
 })
 

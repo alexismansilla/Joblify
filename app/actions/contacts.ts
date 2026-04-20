@@ -194,7 +194,6 @@ export async function createContact(formData: FormData) {
     const position = (formData.get('position') as string)?.trim() || null
     const profile = (formData.get('profile') as string)?.trim() || null
     const industry = (formData.get('industry') as string)?.trim() || null
-    const sector = (formData.get('sector') as string)?.trim() || null
 
     if (!firstName) throw new Error('El nombre es obligatorio')
 
@@ -210,7 +209,6 @@ export async function createContact(formData: FormData) {
             position,
             profile,
             industry,
-            sector,
         }])
         revalidatePath('/admin')
         // Retornamos el id para que el cliente pueda navegar directo a la credencial

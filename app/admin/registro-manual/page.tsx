@@ -102,18 +102,9 @@ const FIELDS: FieldConfig[] = [
         type: 'text',
     },
     {
-        id: 'sector',
-        name: 'sector',
-        label: '09 // SECTOR ESPECÍFICO',
-        placeholder: 'Ej: Fintech',
-        icon: <Briefcase className="w-4 h-4" />,
-        required: false,
-        type: 'text',
-    },
-    {
         id: 'email',
         name: 'email',
-        label: '10 // E-MAIL',
+        label: '09 // E-MAIL',
         placeholder: 'Ej: alan.turing@empresa.com',
         icon: <Mail className="w-4 h-4" />,
         required: false,
@@ -216,7 +207,7 @@ export default function RegistroManualPage() {
                                             name={field.name}
                                             required={field.required}
                                             disabled={loading}
-                                            className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 px-4 font-mono text-sm tracking-widest uppercase transition-colors rounded-none disabled:opacity-40 cursor-pointer"
+                                            className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 px-4 font-mono text-sm tracking-widest transition-colors rounded-none disabled:opacity-40 cursor-pointer"
                                             defaultValue=""
                                         >
                                             <option value="" disabled className="text-black/50 dark:text-white/50">{field.placeholder}</option>
