@@ -45,6 +45,6 @@ next-env.d.ts
 
 # editor & ai agents
 .vscode/
-.agents/
+.agents
 .agent/
 .claude/
