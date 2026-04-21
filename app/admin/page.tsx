@@ -37,7 +37,7 @@ export default async function Home() {
               <span className="text-5xl font-black leading-none tracking-tighter">
                 {contacts.length}
               </span>
-              <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Total Entidades</span>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Total Asistentes</span>
             </div>
           </div>
 

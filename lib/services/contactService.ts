@@ -29,13 +29,33 @@ export interface Match {
 
 export const contactService = {
     async getAll() {
-        const { data, error } = await supabase
-            .from('contacts')
-            .select('*')
-            .order('created_at', { ascending: false });
+        let allData: any[] = [];
+        let from = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
-        return data || [];
+        while (hasMore) {
+            const { data, error } = await supabase
+                .from('contacts')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .range(from, from + pageSize - 1);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                allData = [...allData, ...data];
+                if (data.length < pageSize) {
+                    hasMore = false;
+                } else {
+                    from += pageSize;
+                }
+            } else {
+                hasMore = false;
+            }
+        }
+
+        return allData || [];
     },
 
     async deleteAll() {
@@ -199,34 +219,54 @@ export const contactService = {
     },
 
     async getMatchesReport() {
-        const { data, error } = await supabase
-            .from('contacts')
-            .select(`
-        id,
-        name,
-        first_name,
-        last_name,
-        email,
-        phone,
-        rut,
-        company,
-        position,
-        qr_token,
-        matches:matches!matches_contact_id_fkey (
-          id,
-          created_at,
-          scanner_id,
-          scanner_phone,
-          connection_type,
-          scanner:contacts!matches_scanner_id_fkey (
-            id,
-            name
-          )
-        )
-      `)
-            .order('name', { ascending: true });
+        let allData: any[] = [];
+        let from = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
-        return data || [];
+        while (hasMore) {
+            const { data, error } = await supabase
+                .from('contacts')
+                .select(`
+                    id,
+                    name,
+                    first_name,
+                    last_name,
+                    email,
+                    phone,
+                    rut,
+                    company,
+                    position,
+                    qr_token,
+                    matches:matches!matches_contact_id_fkey (
+                        id,
+                        created_at,
+                        scanner_id,
+                        scanner_phone,
+                        connection_type,
+                        scanner:contacts!matches_scanner_id_fkey (
+                            id,
+                            name
+                        )
+                    )
+                `)
+                .order('name', { ascending: true })
+                .range(from, from + pageSize - 1);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                allData = [...allData, ...data];
+                if (data.length < pageSize) {
+                    hasMore = false;
+                } else {
+                    from += pageSize;
+                }
+            } else {
+                hasMore = false;
+            }
+        }
+
+        return allData || [];
     }
 };
