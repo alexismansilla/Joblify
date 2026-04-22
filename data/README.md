@@ -1,4 +1,4 @@
-# Guía de Carga de Datos - Connectify
+# Guía de Carga de Datos - Plataforma de Networking
 
 Este directorio contiene las plantillas necesarias para realizar la carga masiva de contactos y autoridades en el sistema.
 

@@ -1,17 +1,17 @@
-# Connectify - Networking y Gestión de Contactos para Eventos
+# Networking Pro - Gestión de Contactos para Eventos
 
-Connectify es una plataforma web para gestionar el networking en eventos profesionales. Permite cargar bases de datos de asistentes desde Excel, generar credenciales con QR personalizados, imprimirlos en impresoras térmicas, y rastrear las conexiones generadas a través de WhatsApp Business API con clasificación automática del tipo de conexión.
+Esta plataforma web permite gestionar el networking en eventos profesionales de manera eficiente. Facilita la [carga de bases de datos de asistentes desde Excel](./data/README.md), genera credenciales con QR personalizados para impresión térmica, y rastrea conexiones a través de WhatsApp Business API con clasificación automática.
 
 ## Funcionalidades Principales
 
-- **Carga Masiva de Contactos**: Procesamiento de archivos `.xlsx` y `.csv` con mapeo inteligente de columnas (Nombre, Email, Teléfono, RUT, Empresa, Cargo). Modo dual con ExcelJS para `.xlsx` y fallback a parser CSV.
+- **Carga Masiva de Contactos**: Procesamiento de archivos `.csv` con mapeo inteligente de columnas (Nombre, Email, Teléfono, RUT, Empresa, Cargo). [Ver guía de carga](./data/README.md).
 - **Registro Manual**: Formulario web para crear contactos individuales desde el panel de administración.
 - **Credenciales con QR**: Generación de credenciales renderizadas en Canvas (nombre con word-wrap, empresa, línea divisoria y QR opcional) en formato 62mm x 62mm para etiquetas Brother QL-800.
-- **Impresión Térmica Directa**: Integración con **QZ Tray** mediante WebSocket con autenticación RSA SHA-512 (challenge-response). Detección automática de impresora Brother QL-800. [Ver guía de configuración en Windows](./DOCS_QZ_WINDOWS.md).
+- **Impresión Térmica Directa**: Integración con **QZ Tray** mediante WebSocket con autenticación RSA SHA-512 (challenge-response). Detección automática de impresora Brother QL-800.
 - **Integración WhatsApp Business API**: Webhook que recibe mensajes entrantes, extrae tokens QR del formato `@XXXXXXXX`, crea registros de match, y envía mensajes interactivos con botones para clasificar la conexión (Negocio / Mentoría / Casual). Incluye envío de tarjeta de contacto (vCard).
 - **Dashboard de Matches**: Analítica en tiempo real con volumen total de conexiones, tasa de identificación, distribución por tipo de conexión (porcentajes con conteo al hacer hover), top 10 perfiles más conectados, e historial de actividad por usuario.
-- **Gestión de Autoridades**: Tabla separada para VIPs, speakers y organizadores con carga masiva desde Excel y credenciales diferenciadas.
-- **Sistema de Identidad**: Reconocimiento basado en `localStorage` (`connectify_user_id`) complementado con verificación por número de WhatsApp. Sin necesidad de login tradicional.
+- **Gestión de Autoridades**: Tabla separada para autoridades con carga masiva desde Excel y credenciales diferenciadas.
+- **Sistema de Identidad**: Reconocimiento basado en el número de WhatsApp del escáner, sin necesidad de login tradicional.
 
 ---
 
@@ -44,42 +44,59 @@ Connectify es una plataforma web para gestionar el networking en eventos profesi
 ## Estructura del Proyecto
 
 ```
-connectify/
+networking-pro/
 ├── app/
 │   ├── page.tsx                        # Portal de check-in (buscar e imprimir credenciales)
 │   ├── layout.tsx                      # Layout raíz
 │   ├── globals.css
 │   ├── api/
-│   │   ├── qz-sign/route.ts           # Firma RSA para QZ Tray
+│   │   ├── qz-sign/route.ts            # Firma RSA para QZ Tray
 │   │   └── whatsapp/webhook/route.ts   # Webhook WhatsApp Business API
 │   ├── admin/
-│   │   ├── page.tsx                    # Dashboard admin (carga Excel)
+│   │   ├── page.tsx                    # Dashboard admin (carga de datos)
 │   │   ├── contactos/[id]/page.tsx     # Página de credencial individual
-│   │   ├── autoridades/page.tsx        # Gestión de autoridades/VIPs
+│   │   ├── autoridades/page.tsx        # Gestión de autoridades
 │   │   └── registro-manual/page.tsx    # Registro manual de contactos
 │   ├── connect/[id]/page.tsx           # Landing del escaneo QR (redirige a WhatsApp)
 │   ├── matches/page.tsx                # Dashboard analítico de conexiones
 │   ├── components/
-│   │   ├── FileUpload.tsx              # Carga de archivos Excel
+│   │   ├── FileUpload.tsx              # Carga de archivos CSV/Excel de contactos
 │   │   ├── ContactTable.tsx            # Tabla paginada de contactos con búsqueda
 │   │   ├── AuthorityTable.tsx          # Tabla de autoridades
-│   │   ├── AuthorityFileUpload.tsx     # Carga de archivos Excel para autoridades
+│   │   ├── AuthorityFileUpload.tsx     # Carga de archivos CSV/Excel de autoridades
 │   │   ├── IdentityStatus.tsx          # Badge de identidad del usuario
 │   │   ├── AdminNavbar.tsx             # Navegación admin compartida
 │   │   └── ui/Input.tsx                # Componente input reutilizable
 │   └── actions/
 │       ├── contacts.ts                 # Server actions para contactos
-│       └── authorities.ts              # Server actions para autoridades
+│       ├── contactsParser.ts           # Parsing y mapeo de columnas CSV/Excel (contactos)
+│       ├── authorities.ts              # Server actions para autoridades
+│       └── authoritiesParser.ts        # Parsing y mapeo de columnas CSV/Excel (autoridades)
 ├── lib/
 │   ├── supabase.ts                     # Cliente Supabase
-│   ├── qz.ts                          # Integración QZ Tray
+│   ├── qz.ts                           # Integración QZ Tray
 │   ├── credentialRenderer.ts           # Renderizado de credenciales en Canvas
 │   ├── authorityCredentialRenderer.ts  # Credenciales de autoridades
+│   ├── certs/
+│   │   └── qz-private-key.ts          # Clave privada RSA para firma QZ Tray
+│   ├── templates/
+│   │   └── whatsappTemplates.ts        # Plantillas de mensajes WhatsApp
 │   └── services/
 │       ├── contactService.ts           # Queries de contactos
 │       ├── whatsappService.ts          # Integración WhatsApp API
 │       └── authorityService.ts         # Queries de autoridades
-├── certificates/                       # Certificados locales QZ Tray
+├── data/
+│   ├── README.md                       # Guía de formato y columnas aceptadas
+│   ├── asistente_FIT.csv               # Plantilla de ejemplo para asistentes
+│   ├── autoridades_FIT.csv             # Plantilla de ejemplo para autoridades
+│   └── schema.json                     # Esquema de validación de columnas
+├── scripts/
+│   ├── clean-duplicates.ts             # Limpieza de contactos duplicados
+│   ├── test-whatsapp.ts                # Test de envío de mensajes WhatsApp
+│   └── test-wa.ts                      # Test auxiliar de WhatsApp API
+├── certificates/                       # Certificados locales QZ Tray (no versionados)
+│   ├── digital-certificate.txt
+│   └── private-key.pem
 └── public/
     └── digital-certificate.txt         # Certificado público QZ Tray
 ```
@@ -90,53 +107,57 @@ connectify/
 
 La persistencia de datos utiliza PostgreSQL sobre Supabase, con un esquema diseñado para alta disponibilidad de lectura y trazabilidad de conexiones sin autenticación tradicional.
 
-### Modelo de Entidad-Relación
+### Tablas
 
-```mermaid
-erDiagram
-    contacts ||--o{ matches : "es escaneado (contact_id)"
-    contacts ||--o{ matches : "escanea (scanner_id)"
+**`contacts`** — Asistentes del evento
 
-    contacts {
-        uuid id PK "gen_random_uuid()"
-        text name "Nombre completo"
-        text first_name "Opcional"
-        text last_name "Opcional"
-        text email "Unique opcional"
-        text phone "WhatsApp con normalización"
-        text qr_token UK "Token 10 chars (generate_uid)"
-        text company "Empresa / Organización"
-        text position "Cargo"
-        text industry "Rubro (opcional)"
-        text profile "Bio / Perfil corto"
-        timestamptz created_at "now()"
-    }
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| `id` | `uuid` | PK, generado automáticamente |
+| `name` | `text` | Nombre completo |
+| `first_name` / `last_name` | `text` | Opcionales |
+| `email` | `text` | Opcional |
+| `phone` | `text` | WhatsApp normalizado |
+| `rut` | `text` | RUT/DNI/Pasaporte, opcional |
+| `qr_token` | `text` | Único, 10 chars (`generate_uid`) |
+| `company` | `text` | Empresa u organización |
+| `position` | `text` | Cargo |
+| `industry` / `profile` | `text` | Opcionales |
+| `created_at` | `timestamptz` | Automático |
 
-    matches {
-        uuid id PK
-        uuid contact_id FK "Contacto escaneado"
-        uuid scanner_id FK "Scanner identificado (nullable)"
-        text scanner_phone "Teléfono del scanner (fallback)"
-        text connection_type "negocio | mentoria | casual"
-        timestamptz created_at
-    }
+**`matches`** — Conexiones registradas por escaneo QR
 
-    authorities {
-        uuid id PK
-        text name
-        text position
-        text organization
-        timestamptz created_at
-    }
-```
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| `id` | `uuid` | PK |
+| `contact_id` | `uuid` | FK → contacto escaneado |
+| `scanner_id` | `uuid` | FK → contacto que escaneó (nullable) |
+| `scanner_phone` | `text` | Fallback si no hay `scanner_id` |
+| `connection_type` | `text` | `negocio` \| `mentoria` \| `casual` |
+| `created_at` | `timestamptz` | Automático |
 
-### Seguridad y Acceso (RLS)
+**`authorities`** — Autoridades y VIPs del evento
 
-El proyecto implementa **Row Level Security (RLS)** para permitir operaciones desde el cliente manteniendo la integridad:
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| `id` | `uuid` | PK |
+| `name` | `text` | Nombre completo |
+| `position` | `text` | Cargo |
+| `organization` | `text` | Organización |
+| `created_at` | `timestamptz` | Automático |
 
-- **`contacts`**: Lectura pública (`SELECT`) para búsquedas en check-in y visualización de perfiles. Inserción permitida para registros manuales.
-- **`matches`**: Inserción pública. Actualización (`UPDATE`) permitida para clasificar la conexión desde el webhook de WhatsApp.
-- **`authorities`**: Acceso total simplificado para gestión administrativa.
+### Permisos de Base de Datos (RLS)
+
+La app **no tiene sistema de login**. El acceso a Supabase se divide en dos capas según el origen de la operación:
+
+- **`anon key`** (pública, visible en el browser): solo puede leer datos.
+- **`service_role key`** (privada, solo server-side vía Server Actions): puede escribir. Nunca se expone al browser.
+
+--------------------------------------
+
+- **`contacts`**: No se pueden editar ni borrar desde el cliente.
+- **`matches`**: Cualquiera puede crear una conexión. La clasificación (negocio/mentoría/casual) llega después desde el webhook de WhatsApp, que corre en el servidor.
+- **`authorities`**: Lectura pública para mostrar la lista en el panel. Escritura y borrado solo desde el servidor via `supabaseAdmin` (cliente con `service_role`).
 
 ### Lógica de Base de Datos y Funciones SQL
 
@@ -178,11 +199,8 @@ La arquitectura soporta un flujo de identidad híbrido:
 ### Escaneo y Registro de Match
 
 1. El usuario escanea un QR físico que contiene un enlace a `/connect/[qr_token]`.
-2. La app verifica si el navegador tiene un `connectify_user_id` en localStorage.
-3. Se registra un match en la base de datos:
-   - Con ID almacenado: el match se asocia al contacto identificado.
-   - Sin ID: el match se registra como anónimo.
-4. Se redirige al usuario a WhatsApp con un mensaje personalizado.
+2. Se registra un match en la base de datos asociado al token del QR escaneado.
+3. Se redirige al usuario a WhatsApp con un mensaje personalizado para completar la identificación.
 
 ### Clasificación de Conexión vía WhatsApp
 
@@ -269,29 +287,8 @@ npx tsx scripts/test-whatsapp.ts
 
 ---
 
-## Roadmap (Próximos Pasos)
-
-### 🚀 User Experience
-- **VCard Directa**: Opción para descargar el contacto en formato `.vcf` directamente desde la landing.
-- **Seguimiento Automático**: Envío de mensaje de seguimiento (follow-up) 24h después de la conexión.
-- **PWA**: Optimización para uso como aplicación móvil nativa para organizadores.
-
-### 🎖️ Business Intelligence (ROI)
-- **Sponsor Engagement Score**: Analítica de qué stands capturaron más leads únicos.
-- **Networking Velocity**: Indicador en tiempo real de conexiones por minuto.
-- **Company Power Ranking**: Ranking de empresas con empleados más activos conectando.
-
----
-
-## Guías de Desarrollo
-
-Para mantener la consistencia en el código y seguir los patrones del proyecto, consulta [AGENTS.md](./AGENTS.md). Este archivo contiene las normas para:
-- Estilo de commits.
-- Uso de componentes de UI (Tailwind 4 + Framer Motion).
-- Patrones de Server Actions y Supabase.
-
----
-
 ## Despliegue
 
 La aplicación está configurada para desplegarse en **Vercel** con soporte nativo de Next.js. Las páginas de admin y matches usan `force-dynamic` para asegurar datos siempre actualizados.
+
+Cada commit directo a la rama `main` dispara automáticamente un deploy a producción. No es necesario ningún paso manual — el pipeline de Vercel toma el commit, construye la app y la publica.
