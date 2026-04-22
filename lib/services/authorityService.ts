@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export interface Authority {
     id: string;
@@ -10,7 +10,7 @@ export interface Authority {
 
 export const authorityService = {
     async getAll(): Promise<Authority[]> {
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await getSupabaseAdmin()
             .from('authorities')
             .select('*')
             .order('name', { ascending: true });
@@ -20,7 +20,7 @@ export const authorityService = {
     },
 
     async searchByName(query: string): Promise<Authority[]> {
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await getSupabaseAdmin()
             .from('authorities')
             .select('*')
             .ilike('name', `%${query}%`)
@@ -31,7 +31,7 @@ export const authorityService = {
     },
 
     async insertMany(authorities: Omit<Authority, 'id' | 'created_at'>[]): Promise<Authority[]> {
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await getSupabaseAdmin()
             .from('authorities')
             .insert(authorities)
             .select();
@@ -41,7 +41,7 @@ export const authorityService = {
     },
 
     async deleteAll(): Promise<void> {
-        const { error } = await supabaseAdmin
+        const { error } = await getSupabaseAdmin()
             .from('authorities')
             .delete()
             .neq('id', '00000000-0000-0000-0000-000000000000'); // elimina todos
