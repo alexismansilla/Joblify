@@ -88,50 +88,72 @@ connectify/
 
 ## Arquitectura de Datos (Supabase / PostgreSQL)
 
+La persistencia de datos utiliza PostgreSQL sobre Supabase, con un esquema diseñado para alta disponibilidad de lectura y trazabilidad de conexiones sin autenticación tradicional.
+
+### Modelo de Entidad-Relación
+
 ```mermaid
 erDiagram
-    contacts ||--o{ matches : "es escaneado en"
-    contacts ||--o{ matches : "escanea como scanner"
+    contacts ||--o{ matches : "es escaneado (contact_id)"
+    contacts ||--o{ matches : "escanea (scanner_id)"
 
     contacts {
-        uuid id PK
+        uuid id PK "gen_random_uuid()"
         text name "Nombre completo"
-        text first_name "Nombre (nullable)"
-        text last_name "Apellido (nullable)"
-        text email "Correo (nullable)"
-        text phone "Teléfono / WhatsApp (nullable)"
-        text rut "RUT / DNI / Pasaporte (nullable)"
-        text company "Empresa (nullable)"
-        text position "Cargo (nullable)"
-        text qr_token UK "Token QR auto-generado (8-10 chars)"
-        timestamp created_at
+        text first_name "Opcional"
+        text last_name "Opcional"
+        text email "Unique opcional"
+        text phone "WhatsApp con normalización"
+        text qr_token UK "Token 10 chars (generate_uid)"
+        text company "Empresa / Organización"
+        text position "Cargo"
+        text industry "Rubro (opcional)"
+        text profile "Bio / Perfil corto"
+        timestamptz created_at "now()"
     }
 
     matches {
         uuid id PK
-        uuid contact_id FK "Dueño del QR escaneado"
-        uuid scanner_id FK "Quién escaneó (nullable)"
-        text scanner_phone "Teléfono del scanner (nullable)"
-        text connection_type "negocio | mentoria | casual (nullable)"
-        timestamp created_at
+        uuid contact_id FK "Contacto escaneado"
+        uuid scanner_id FK "Scanner identificado (nullable)"
+        text scanner_phone "Teléfono del scanner (fallback)"
+        text connection_type "negocio | mentoria | casual"
+        timestamptz created_at
     }
 
     authorities {
         uuid id PK
-        text name "Nombre completo"
-        text position "Cargo (nullable)"
-        text organization "Organización (nullable)"
-        timestamp created_at
+        text name
+        text position
+        text organization
+        timestamptz created_at
     }
 ```
 
-### Relaciones clave
+### Seguridad y Acceso (RLS)
 
-- **`matches.contact_id`** → `contacts.id`: El contacto cuyo QR fue escaneado.
-- **`matches.scanner_id`** → `contacts.id` (nullable): Quién escaneó. `null` si el scanner es anónimo (no está en la base de contactos).
-- **`matches.scanner_phone`**: Fallback de identificación cuando `scanner_id` es null. Se obtiene del número de WhatsApp entrante.
-- **`contacts.qr_token`**: Generado automáticamente por la DB con constraint UNIQUE y reintentos en caso de colisión.
-- **`authorities`**: Tabla independiente sin FK a otras tablas. Almacena VIPs, speakers y organizadores con credenciales diferenciadas.
+El proyecto implementa **Row Level Security (RLS)** para permitir operaciones desde el cliente manteniendo la integridad:
+
+- **`contacts`**: Lectura pública (`SELECT`) para búsquedas en check-in y visualización de perfiles. Inserción permitida para registros manuales.
+- **`matches`**: Inserción pública. Actualización (`UPDATE`) permitida para clasificar la conexión desde el webhook de WhatsApp.
+- **`authorities`**: Acceso total simplificado para gestión administrativa.
+
+### Lógica de Base de Datos y Funciones SQL
+
+Se utilizan funciones personalizadas en PL/pgSQL para automatizar procesos críticos:
+
+| Función | Propósito |
+|---------|-----------|
+| `generate_uid(length)` | Genera tokens alfanuméricos únicos para los códigos QR, minimizando colisiones. |
+| `remove_duplicate_contacts()` | Limpieza inteligente basada en coincidencia de Nombre + Email/Teléfono. |
+| `purge_contacts()` | Reseteo controlado de la base de datos para nuevos eventos. |
+
+### Identificación de Usuario "Sin Login"
+
+La arquitectura soporta un flujo de identidad híbrido:
+1. **Identidad Persistente**: Al escanear por primera vez, se asocia el `scanner_phone` (desde WhatsApp) con un registro en `contacts`.
+2. **Fallback por Token**: Si el usuario no está en la base, se utiliza su número de teléfono como identificador único en la tabla `matches` hasta que complete su perfil.
+3. **Constraint de Unicidad**: El campo `qr_token` garantiza que cada credencial impresa sea única y rastreable permanentemente.
 
 ---
 
@@ -211,6 +233,7 @@ npm run test:watch # Modo watch
    # Supabase
    NEXT_PUBLIC_SUPABASE_URL=
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=
+   SUPABASE_SERVICE_ROLE_KEY= # Requerido para scripts de mantenimiento
 
    # QR / Impresión
    NEXT_PUBLIC_QR_OUTPUT_MODE=PRINT
@@ -232,6 +255,43 @@ npm run test:watch # Modo watch
 
 ---
 
+## Scripts de Mantenimiento
+
+Existen scripts en la carpeta `scripts/` para tareas administrativas. Para ejecutarlos se recomienda usar `tsx`:
+
+```bash
+# Limpiar contactos duplicados (usa el procedimiento almacenado remove_duplicate_contacts)
+npx tsx scripts/clean-duplicates.ts
+
+# Test de envío de mensajes por WhatsApp
+npx tsx scripts/test-whatsapp.ts
+```
+
+---
+
+## Roadmap (Próximos Pasos)
+
+### 🚀 User Experience
+- **VCard Directa**: Opción para descargar el contacto en formato `.vcf` directamente desde la landing.
+- **Seguimiento Automático**: Envío de mensaje de seguimiento (follow-up) 24h después de la conexión.
+- **PWA**: Optimización para uso como aplicación móvil nativa para organizadores.
+
+### 🎖️ Business Intelligence (ROI)
+- **Sponsor Engagement Score**: Analítica de qué stands capturaron más leads únicos.
+- **Networking Velocity**: Indicador en tiempo real de conexiones por minuto.
+- **Company Power Ranking**: Ranking de empresas con empleados más activos conectando.
+
+---
+
+## Guías de Desarrollo
+
+Para mantener la consistencia en el código y seguir los patrones del proyecto, consulta [AGENTS.md](./AGENTS.md). Este archivo contiene las normas para:
+- Estilo de commits.
+- Uso de componentes de UI (Tailwind 4 + Framer Motion).
+- Patrones de Server Actions y Supabase.
+
+---
+
 ## Despliegue
 
-La aplicación está configurada para desplegarse en **Vercel** con soporte nativo de Next.js. Las páginas de admin y matches usan `force-dynamic` para datos en tiempo real.
+La aplicación está configurada para desplegarse en **Vercel** con soporte nativo de Next.js. Las páginas de admin y matches usan `force-dynamic` para asegurar datos siempre actualizados.
