@@ -51,7 +51,7 @@ export function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
 
-    if (pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/') && !pathname.startsWith('/api/whatsapp/webhook')) {
         if (!checkRateLimit(ip, pathname)) {
             return new NextResponse('Too Many Requests', { status: 429 })
         }
