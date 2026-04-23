@@ -76,49 +76,46 @@ export async function POST(request: Request) {
 }
 
 async function processConnection(scannerPhone: string, text: string) {
-    // Regex para extraer solo el qr_token del mensaje: @XXXXXXXXXX
     const match = text.match(/@([A-Z0-9]{8,10})/)
-
     if (!match) return
 
     const qrToken = match[1]
-
     console.log(`Buscando contacto con qr_token: ${qrToken}`)
 
-    // 1. Buscamos al asistente destino por su qr_token
-    const targetContact = await contactService.getByQrToken(qrToken)
+    // 1+2. Buscamos target y scanner en paralelo — son queries independientes
+    const [targetContact, scannerContact] = await Promise.all([
+        contactService.getByQrToken(qrToken),
+        contactService.getByIdentifier(scannerPhone),
+    ])
 
     if (!targetContact) {
         console.error('Contacto destino no encontrado para qr_token:', qrToken)
         return
     }
 
-    // 2. Buscamos si el escáner ya está registrado en la DB
-    const scannerContact = await contactService.getByIdentifier(scannerPhone)
-
-    // MODO PRUEBA / AUTO-ESCANEO: Permite al usuario jugar con el bot sin ensuciar métricas
+    // MODO PRUEBA / AUTO-ESCANEO
     if (scannerContact && scannerContact.id === targetContact.id) {
         console.log(`[Webhook] MODO DE PRUEBA: Auto-escaneo activado para ${scannerContact.name}`)
-        
-        // Enviamos la interfaz interactiva con un ID estático inofensivo
-        await whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, 'self-test')
-        await whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone || '')
+        await Promise.all([
+            whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, 'self-test'),
+            whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone || ''),
+        ])
         return
     }
 
-    // 3. Registramos el match con el teléfono del escáner
+    // 3. Registramos el match (depende de ambos resultados anteriores)
     const matchRecord = await contactService.registerWhatsappMatch(targetContact.id, scannerContact?.id || null, scannerPhone)
 
     if (!matchRecord) {
         console.error('No se pudo crear el registro del match')
-        return;
+        return
     }
 
-    // 4. Enviamos el mensaje interactivo con los botones de clasificación
-    await whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, matchRecord[0].id)
-
-    // 5. Enviamos la tarjeta de contacto nativa asegurándonos de que ya se despachó el anterior
-    await whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone)
+    // 4+5. Enviamos ambos mensajes en paralelo — son HTTP calls independientes
+    await Promise.all([
+        whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, matchRecord[0].id),
+        whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone),
+    ])
 }
 
 
