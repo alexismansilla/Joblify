@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { ExternalLink, Mail, User, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ExternalLink, Mail, User, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Input } from './ui/Input'
 
@@ -20,31 +20,54 @@ interface Contact {
     created_at?: string
 }
 
-export default function ContactTable({ contacts }: { contacts: Contact[] }) {
+const ITEMS_PER_PAGE = 50
+
+export default function ContactTable() {
+    const [contacts, setContacts] = useState<Contact[]>([])
+    const [total, setTotal] = useState(0)
     const [searchQuery, setSearchQuery] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
-    const itemsPerPage = 50
+    const [loading, setLoading] = useState(true)
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    const query = searchQuery.toLowerCase()
-    const filteredContacts = contacts.filter(contact =>
-        contact.name.toLowerCase().includes(query) ||
-        (contact.email && contact.email.toLowerCase().includes(query)) ||
-        (contact.phone && contact.phone.toLowerCase().includes(query)) ||
-        (contact.rut && contact.rut.toLowerCase().includes(query)) ||
-        (contact.company && contact.company.toLowerCase().includes(query)) ||
-        (contact.position && contact.position.toLowerCase().includes(query))
-    )
+    const fetchContacts = useCallback(async (q: string, page: number) => {
+        setLoading(true)
+        try {
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(ITEMS_PER_PAGE),
+                ...(q.trim() ? { q: q.trim() } : {}),
+            })
+            const res = await fetch(`/api/contacts?${params}`)
+            if (!res.ok) throw new Error('fetch failed')
+            const json = await res.json()
+            setContacts(json.contacts ?? [])
+            setTotal(json.total ?? 0)
+        } catch {
+            setContacts([])
+        } finally {
+            setLoading(false)
+        }
+    }, [])
 
-    const totalPages = Math.ceil(filteredContacts.length / itemsPerPage)
-    const currentContacts = filteredContacts.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    useEffect(() => {
+        fetchContacts('', 1)
+    }, [fetchContacts])
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value)
+        const value = e.target.value
+        setSearchQuery(value)
         setCurrentPage(1)
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(() => fetchContacts(value, 1), 350)
     }
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page)
+        fetchContacts(searchQuery, page)
+    }
+
+    const totalPages = Math.ceil(total / ITEMS_PER_PAGE)
 
     return (
         <div className="w-full flex flex-col gap-6">
@@ -59,7 +82,10 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
                 />
 
                 <div className="font-mono text-[10px] font-bold tracking-widest uppercase opacity-50">
-                    MOSTRANDO {currentContacts.length} DE {filteredContacts.length} ENTIDADES
+                    {loading
+                        ? 'CARGANDO...'
+                        : `MOSTRANDO ${contacts.length} DE ${total} ENTIDADES`
+                    }
                 </div>
             </div>
 
@@ -76,13 +102,19 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/5 dark:divide-white/5">
-                            {currentContacts.length > 0 ? (
-                                currentContacts.map((contact, index) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center">
+                                        <Loader2 className="w-5 h-5 animate-spin mx-auto opacity-40" />
+                                    </td>
+                                </tr>
+                            ) : contacts.length > 0 ? (
+                                contacts.map((contact, index) => (
                                     <motion.tr
-                                        key={contact.id || `contact-${index}`}
+                                        key={contact.id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: (index % itemsPerPage) * 0.02 }}
+                                        transition={{ delay: index * 0.02 }}
                                         className="group hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                                     >
                                         <td className="px-6 py-6">
@@ -148,8 +180,8 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
             {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-6 border-t border-black/10 dark:border-white/10">
                     <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1 || loading}
                         className="inline-flex items-center gap-2 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 border border-transparent disabled:opacity-20 disabled:hover:bg-transparent transition-colors font-mono text-[10px] font-bold tracking-widest uppercase"
                     >
                         <ChevronLeft className="w-4 h-4" /> Anterior
@@ -158,8 +190,8 @@ export default function ContactTable({ contacts }: { contacts: Contact[] }) {
                         PÁG {currentPage} DE {totalPages}
                     </span>
                     <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages || loading}
                         className="inline-flex items-center gap-2 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 border border-transparent disabled:opacity-20 disabled:hover:bg-transparent transition-colors font-mono text-[10px] font-bold tracking-widest uppercase"
                     >
                         Siguiente <ChevronRight className="w-4 h-4" />

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { Printer, Search, User, ChevronLeft, ChevronRight, Loader2, Building2, CheckCircle2, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Input } from './ui/Input'
-import { jsPDF } from 'jspdf'
 import { printToQZ } from '@/lib/qz'
 import { generateAuthorityCredentialImage } from '@/lib/authorityCredentialRenderer'
 
@@ -71,6 +70,7 @@ export default function AuthorityTable({ authorities }: { authorities: Authority
             }
 
             // Fallback PDF. Como la imagen redujo un 30% su alto (732x512), usamos formato rectangular apaisado ~62x43mm
+            const { jsPDF } = await import('jspdf')
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [62, 43] })
             doc.addImage(credentialBase64, 'PNG', 0, 0, 62, 43)
             doc.save(`Autoridad_${authority.name.replace(/\s+/g, '_')}.pdf`)

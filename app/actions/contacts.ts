@@ -116,6 +116,18 @@ export async function getContacts() {
 }
 
 /**
+ * Returns only the total count of contacts (used in admin header).
+ */
+export async function getContactsCount(): Promise<number> {
+    try {
+        return await contactService.getCount()
+    } catch (error) {
+        console.error('Error counting contacts:', error)
+        return 0
+    }
+}
+
+/**
  * Retrieves a contact by its ID.
  * This is used to replace direct client-side calls.
  */

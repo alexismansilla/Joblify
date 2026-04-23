@@ -1,13 +1,12 @@
-import { getContacts } from '@/app/actions/contacts'
+import { getContactsCount } from '@/app/actions/contacts'
 import FileUpload from '@/app/components/FileUpload'
 import ContactTable from '@/app/components/ContactTable'
 import { Users } from 'lucide-react'
 import AdminNavbar from '@/app/components/AdminNavbar'
-// Forzamos rendering dinámico para siempre mostrar la lista actualizada de contactos
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const contacts = await getContacts()
+  const total = await getContactsCount()
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-black dark:text-white font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black relative">
@@ -35,14 +34,14 @@ export default async function Home() {
             </div>
             <div className="flex flex-col items-start md:items-end">
               <span className="text-5xl font-black leading-none tracking-tighter">
-                {contacts.length}
+                {total}
               </span>
               <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Total Asistentes</span>
             </div>
           </div>
 
-          {contacts.length > 0 ? (
-            <ContactTable contacts={contacts} />
+          {total > 0 ? (
+            <ContactTable />
           ) : (
             <div className="border border-dashed border-black/20 dark:border-white/20 p-16 text-center bg-transparent backdrop-blur-sm">
               <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mx-auto mb-6">

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { contactService } from '@/lib/services/contactService'
 import { whatsappService } from '@/lib/services/whatsappService'
 
@@ -41,29 +41,36 @@ export async function POST(request: Request) {
                 const message = value.messages[0]
                 const scannerPhone = message.from // Número que escaneó el QR
 
-                // Si el mensaje es interactivo (respuesta a un botón)
-                if (message.type === 'interactive') {
-                    const buttonReply = message.interactive?.button_reply
-                    if (buttonReply) {
-                        await processButtonReply(scannerPhone, buttonReply.id)
+                // Usamos 'after' para responder 200 OK inmediatamente a Meta 
+                // y procesar la lógica pesada en background. Esto evita Timeouts en Vercel.
+                after(async () => {
+                    try {
+                        // Si el mensaje es interactivo (respuesta a un botón)
+                        if (message.type === 'interactive') {
+                            const buttonReply = message.interactive?.button_reply
+                            if (buttonReply) {
+                                await processButtonReply(scannerPhone, buttonReply.id)
+                            }
+                        }
+                        // Si es un mensaje de texto normal (el mensaje que genera el QR)
+                        else if (message.type === 'text') {
+                            const messageText = message.text?.body
+                            console.log('Mensaje recibido:', messageText)
+                            await processConnection(scannerPhone, messageText)
+                        }
+                    } catch (bgError) {
+                        console.error('Error in background processing:', bgError)
                     }
-                }
-                // Si es un mensaje de texto normal (el mensaje que genera el QR)
-                else if (message.type === 'text') {
-                    const messageText = message.text?.body
-                    console.log('Mensaje recibido:', messageText)
-                    await processConnection(scannerPhone, messageText)
-                }
+                })
             }
 
-            // Siempre retornar 200 OK para que Meta no reintente
+            // Respuesta inmediata: Meta deja de esperar y no reintenta el webhook
             return new NextResponse('OK', { status: 200 })
         }
 
         return new NextResponse('Not Found', { status: 404 })
     } catch (error) {
         console.error('Error processing webhook:', error)
-        // Aún así respondemos 200 para que meta no bloquee el webhook
         return new NextResponse('Error', { status: 200 })
     }
 }

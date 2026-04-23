@@ -58,6 +58,52 @@ export const contactService = {
         return allData || [];
     },
 
+    async getCount(): Promise<number> {
+        const { count, error } = await supabase
+            .from('contacts')
+            .select('*', { count: 'exact', head: true });
+
+        if (error) throw error;
+        return count ?? 0;
+    },
+
+    async getPage(page: number, limit: number): Promise<Contact[]> {
+        const from = (page - 1) * limit;
+        const { data, error } = await supabase
+            .from('contacts')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, created_at')
+            .order('created_at', { ascending: false })
+            .range(from, from + limit - 1);
+
+        if (error) throw error;
+        return (data ?? []) as Contact[];
+    },
+
+    async search(query: string, page: number, limit: number): Promise<Contact[]> {
+        const from = (page - 1) * limit;
+        const q = query.trim();
+        const { data, error } = await supabase
+            .from('contacts')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, created_at')
+            .or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,rut.ilike.%${q}%,company.ilike.%${q}%,position.ilike.%${q}%`)
+            .order('created_at', { ascending: false })
+            .range(from, from + limit - 1);
+
+        if (error) throw error;
+        return (data ?? []) as Contact[];
+    },
+
+    async searchCount(query: string): Promise<number> {
+        const q = query.trim();
+        const { count, error } = await supabase
+            .from('contacts')
+            .select('*', { count: 'exact', head: true })
+            .or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,rut.ilike.%${q}%,company.ilike.%${q}%,position.ilike.%${q}%`);
+
+        if (error) throw error;
+        return count ?? 0;
+    },
+
     async deleteAll() {
         // Ejecutamos una función RPC (Remote Procedure Call) en Supabase 
         // configurada como SECURITY DEFINER para poder eludir las restricciones nativas de RLS al realizar purgas masivas
