@@ -273,6 +273,50 @@ npm run test:watch # Modo watch
 
 ---
 
+## Seguridad y Acceso Admin
+
+### Credenciales de Acceso
+
+Las rutas `/admin` y `/matches` están protegidas con HTTP Basic Auth. El navegador mostrará un popup de usuario y contraseña al intentar acceder.
+
+| Campo    | Valor por defecto        |
+|----------|--------------------------|
+| Usuario  | `x_connect_master77`     |
+| Password | `zQ#9mKdL!2vP$wN@xT`    |
+
+Para cambiar las credenciales sin tocar el código, definir en `.env` o en Vercel → Settings → Environment Variables:
+
+```env
+ADMIN_USERNAME=tu_usuario
+ADMIN_PASSWORD=tu_contraseña
+```
+
+Si esas variables no están definidas, se usan los valores de la tabla anterior.
+
+---
+
+### Rate Limiting
+
+El archivo `proxy.ts` incluye protección automática contra abuso de los endpoints de API. Funciona así:
+
+**¿Qué hace?**
+Cuenta cuántas veces una misma IP hace requests en una ventana de 60 segundos. Si supera el límite, devuelve `429 Too Many Requests` y bloquea esa IP hasta que pase el minuto.
+
+**Límites configurados:**
+
+| Endpoint | Límite |
+|----------|--------|
+| `/api/whatsapp/webhook` | 60 requests / minuto por IP |
+| `/api/contacts` | 120 requests / minuto por IP |
+| Resto de `/api/` | 300 requests / minuto por IP |
+
+**Ejemplo concreto:**
+Un asistente escanea su QR con WhatsApp → llega un webhook → cuenta como 1 request de esa IP. Si el mismo número envía más de 60 mensajes en un minuto (imposible en uso normal), se bloquea automáticamente.
+
+**Importante:** el rate limiting es por instancia del servidor. En Vercel Pro con múltiples instancias edge, cada instancia tiene su propio contador independiente, por lo que los límites efectivos pueden ser un poco más altos en producción. Para el evento de 2000 personas es suficiente.
+
+---
+
 ## Scripts de Mantenimiento
 
 Existen scripts en la carpeta `scripts/` para tareas administrativas. Para ejecutarlos se recomienda usar `tsx`:

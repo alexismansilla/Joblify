@@ -1,33 +1,70 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function proxy(req: NextRequest) {
+const rateMap = new Map<string, { count: number; resetAt: number }>()
+const WINDOW_MS = 60_000
+
+// Límites por ruta (requests por minuto por IP)
+const RATE_LIMITS: Array<[string, number]> = [
+    ['/api/whatsapp/webhook', 60],
+    ['/api/contacts', 120],
+    ['/api/', 300],
+]
+
+function checkRateLimit(ip: string, pathname: string): boolean {
+    const limit = RATE_LIMITS.find(([route]) => pathname.startsWith(route))?.[1] ?? 300
+    const key = `${ip}:${pathname.split('/').slice(0, 3).join('/')}`
+    const now = Date.now()
+
+    const entry = rateMap.get(key)
+    if (!entry || now > entry.resetAt) {
+        rateMap.set(key, { count: 1, resetAt: now + WINDOW_MS })
+        return true
+    }
+    if (entry.count >= limit) return false
+    entry.count++
+    return true
+}
+
+function requireBasicAuth(req: NextRequest): NextResponse | null {
     const basicAuth = req.headers.get('authorization')
 
-    if (basicAuth) {
-        const authValue = basicAuth.split(' ')[1]
-        const [user, pwd] = atob(authValue).split(':')
-
-        // Usa variables de entorno, o estas credenciales por defecto si no están definidas
-        const validUser = process.env.ADMIN_USERNAME || 'x_connect_master77'
-        const validPwd = process.env.ADMIN_PASSWORD || 'zQ#9mKdL!2vP$wN@xT'
+    if (basicAuth?.startsWith('Basic ')) {
+        const [user, pwd] = atob(basicAuth.slice(6)).split(':')
+        const validUser = process.env.ADMIN_USERNAME ?? 'x_connect_master77'
+        const validPwd = process.env.ADMIN_PASSWORD ?? 'zQ#9mKdL!2vP$wN@xT'
 
         if (user === validUser && pwd === validPwd) {
-            return NextResponse.next()
+            return null
         }
     }
 
-    // Si las credenciales no son válidas o no se proveyeron, pedir autenticación nativa
-    return new NextResponse('Authentication Required.', {
+    return new NextResponse('Authentication Required', {
         status: 401,
         headers: {
-            'WWW-Authenticate': 'Basic realm="Connectify Admin Secure Area"',
+            'WWW-Authenticate': 'Basic realm="Connectify Admin"',
         },
     })
 }
 
-// Configurar el proxy para que actúe sobre las rutas restringidas, 
-// dejando el Home principal (/) y los webhooks de Meta públicos y sin contraseña.
+export function proxy(req: NextRequest) {
+    const { pathname } = req.nextUrl
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+
+    if (pathname.startsWith('/api/')) {
+        if (!checkRateLimit(ip, pathname)) {
+            return new NextResponse('Too Many Requests', { status: 429 })
+        }
+    }
+
+    if (pathname.startsWith('/admin') || pathname.startsWith('/matches')) {
+        const authResult = requireBasicAuth(req)
+        if (authResult) return authResult
+    }
+
+    return NextResponse.next()
+}
+
 export const config = {
-    matcher: ['/admin', '/admin/:path*', '/matches'],
+    matcher: ['/admin/:path*', '/matches/:path*', '/api/:path*'],
 }
