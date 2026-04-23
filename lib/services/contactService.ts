@@ -314,5 +314,36 @@ export const contactService = {
         }
 
         return allData || [];
-    }
+    },
+
+    async getMatchesDashboard() {
+        const { data, error } = await supabase.rpc('get_matches_dashboard')
+        if (error) throw error
+        return data as {
+            stats: {
+                total_contacts: number
+                active_contacts: number
+                total_matches: number
+                negocio: number
+                mentoria: number
+                casual: number
+                no_registrado: number
+            }
+            top_contacts: Array<{
+                id: string
+                name: string
+                email: string | null
+                phone: string | null
+                company: string | null
+                match_count: number
+                matches: Array<{
+                    id: string
+                    created_at: string
+                    connection_type: string | null
+                    scanner_phone: string | null
+                    scanner: { id: string; name: string } | null
+                }>
+            }>
+        }
+    },
 };

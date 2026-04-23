@@ -190,6 +190,19 @@ export async function getMatchesReport() {
 }
 
 /**
+ * Returns pre-aggregated stats + top 20 for the matches dashboard.
+ * Single DB call via RPC — no full table load.
+ */
+export async function getMatchesDashboard() {
+    try {
+        return await contactService.getMatchesDashboard()
+    } catch (error) {
+        console.error('Error getting matches dashboard:', error)
+        return null
+    }
+}
+
+/**
  * Creates a single contact manually (registro manual desde UI).
  * Reutiliza insertMany para aprovechar el manejo de colisiones de qr_token.
  */
