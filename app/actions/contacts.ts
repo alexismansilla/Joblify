@@ -1,7 +1,6 @@
 'use server'
 
 import { contactService } from '@/lib/services/contactService'
-import ExcelJS from 'exceljs'
 import { revalidatePath } from 'next/cache'
 import { parseCsvToContacts, splitCsvLine, mapRowToContact, cellToText } from './contactsParser'
 
@@ -58,6 +57,7 @@ export async function deleteAllContacts() {
 async function parseSpreadsheet(buffer: ArrayBuffer) {
     // --- Intento 1: XLSX con ExcelJS ---
     try {
+        const ExcelJS = (await import('exceljs')).default
         const workbook = new ExcelJS.Workbook()
         await workbook.xlsx.load(buffer)
         const worksheet = workbook.worksheets[0]
