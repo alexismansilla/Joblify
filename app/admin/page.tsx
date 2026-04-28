@@ -16,11 +16,11 @@ export default async function Home() {
       <AdminNavbar />
 
       <main className="max-w-[1400px] mx-auto px-8 pt-28 pb-24 relative overflow-hidden">
-        <section className="mb-12 relative z-10 flex flex-col md:flex-row gap-8">
+        {/* <section className="mb-12 relative z-10 flex flex-col md:flex-row gap-8">
           <div className="flex-1">
             <FileUpload />
           </div>
-        </section>
+        </section> */}
 
         <section className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-6 border-b border-black/10 dark:border-white/10 gap-4">

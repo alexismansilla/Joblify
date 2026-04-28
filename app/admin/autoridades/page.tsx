@@ -19,8 +19,8 @@ export default async function AutoridadesPage() {
 
             <main className="max-w-[1400px] mx-auto px-8 pt-28 pb-24 relative">
 
-                {/* Sección: Upload */}
-                <section className="mb-12 relative z-10">
+                {/* Sección: Upload — oculta temporalmente */}
+                {/* <section className="mb-12 relative z-10">
                     <div className="mb-6">
                         <p className="font-mono text-[10px] tracking-widest uppercase opacity-40">
                             01 // IMPORTAR LISTA
@@ -35,8 +35,7 @@ export default async function AutoridadesPage() {
                     <AuthorityFileUpload />
                 </section>
 
-                {/* Divisor */}
-                <div className="h-px bg-black/10 dark:bg-white/10 mb-12" />
+                <div className="h-px bg-black/10 dark:bg-white/10 mb-12" /> */}
 
                 {/* Sección: Lista */}
                 <section className="relative z-10">
