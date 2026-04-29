@@ -23,5 +23,5 @@ export function buildProfileMessageText(contact: ContactTemplateData): string {
         `🏭 *Industria:* ${contact.industry || 'N/A'}`,
         '',
         '¿Cómo clasificarías esta conexión?'
-    ].join('\n');
+    ].join('\n')
 }

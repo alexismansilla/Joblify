@@ -1,5 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// ─── Mock de next/server: hace que after() sea awaitable en tests ─────
+let pendingAfter: Promise<void>[] = []
+
+vi.mock('next/server', async () => {
+    const mod = await vi.importActual<typeof import('next/server')>('next/server')
+    return {
+        ...mod,
+        after: (fn: () => Promise<void>) => { pendingAfter.push(fn()) },
+    }
+})
+
 // ─── Mocks (hoisted so vi.mock factories can reference them) ─────
 
 const { mockContactService, mockWhatsappService } = vi.hoisted(() => ({
@@ -42,6 +53,13 @@ function makePostRequest(body: unknown): Request {
         body: JSON.stringify(body),
         headers: { 'Content-Type': 'application/json' },
     })
+}
+
+async function postAndFlush(body: unknown): Promise<Response> {
+    pendingAfter = []
+    const res = await POST(makePostRequest(body))
+    await Promise.all(pendingAfter)
+    return res
 }
 
 function makeWhatsappBody(message: Record<string, unknown>) {
@@ -99,6 +117,7 @@ describe('GET - webhook verification', () => {
 describe('POST - text message with QR token', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        pendingAfter = []
     })
 
     it('creates match when valid token and known scanner', async () => {
@@ -108,12 +127,7 @@ describe('POST - text message with QR token', () => {
         mockContactService.getByIdentifier.mockResolvedValue(scannerContact)
         mockContactService.registerWhatsappMatch.mockResolvedValue([{ id: 'm1' }])
 
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: 'Hello @ABCD1234EF from my QR' },
-        }))
-
-        const res = await POST(req)
+        const res = await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: 'Hello @ABCD1234EF from my QR' } }))
         expect(res.status).toBe(200)
         expect(mockContactService.registerWhatsappMatch).toHaveBeenCalledWith('c1', 's1', '56912345678')
         expect(mockWhatsappService.sendInteractiveProfileMessage).toHaveBeenCalled()
@@ -126,36 +140,20 @@ describe('POST - text message with QR token', () => {
         mockContactService.getByIdentifier.mockResolvedValue(null)
         mockContactService.registerWhatsappMatch.mockResolvedValue([{ id: 'm1' }])
 
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: 'Scan @ABCDEF12' },
-        }))
-
-        const res = await POST(req)
+        const res = await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: 'Scan @ABCDEF12' } }))
         expect(res.status).toBe(200)
         expect(mockContactService.registerWhatsappMatch).toHaveBeenCalledWith('c1', null, '56912345678')
     })
 
     it('does not search contact when no @ token in message', async () => {
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: 'Just a normal message' },
-        }))
-
-        const res = await POST(req)
+        const res = await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: 'Just a normal message' } }))
         expect(res.status).toBe(200)
         expect(mockContactService.getByQrToken).not.toHaveBeenCalled()
     })
 
     it('does not create match when token not found in DB', async () => {
         mockContactService.getByQrToken.mockResolvedValue(null)
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: 'Scan @NOTEXIST' },
-        }))
-
-        const res = await POST(req)
+        const res = await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: 'Scan @NOTEXIST' } }))
         expect(res.status).toBe(200)
         expect(mockContactService.registerWhatsappMatch).not.toHaveBeenCalled()
     })
@@ -165,12 +163,7 @@ describe('POST - text message with QR token', () => {
         mockContactService.getByIdentifier.mockResolvedValue(null)
         mockContactService.registerWhatsappMatch.mockResolvedValue(null)
 
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: '@ABCDEFGH' },
-        }))
-
-        const res = await POST(req)
+        const res = await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: '@ABCDEFGH' } }))
         expect(res.status).toBe(200)
         expect(mockWhatsappService.sendInteractiveProfileMessage).not.toHaveBeenCalled()
         expect(mockWhatsappService.sendContactCard).not.toHaveBeenCalled()
@@ -178,35 +171,18 @@ describe('POST - text message with QR token', () => {
 
     it('accepts 8-character token', async () => {
         mockContactService.getByQrToken.mockResolvedValue(null)
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: '@ABCDEFGH' },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: '@ABCDEFGH' } }))
         expect(mockContactService.getByQrToken).toHaveBeenCalledWith('ABCDEFGH')
     })
 
     it('accepts 10-character token', async () => {
         mockContactService.getByQrToken.mockResolvedValue(null)
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: '@ABCDEFGHIJ' },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: '@ABCDEFGHIJ' } }))
         expect(mockContactService.getByQrToken).toHaveBeenCalledWith('ABCDEFGHIJ')
     })
 
     it('ignores token shorter than 8 characters', async () => {
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'text',
-            text: { body: '@SHORT' },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'text', text: { body: '@SHORT' } }))
         expect(mockContactService.getByQrToken).not.toHaveBeenCalled()
     })
 })
@@ -214,17 +190,12 @@ describe('POST - text message with QR token', () => {
 describe('POST - button reply', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        pendingAfter = []
     })
 
     it('updates connection_type to negocio and sends confirmation', async () => {
         mockContactService.updateMatchConnectionType.mockResolvedValue([{ id: 'm1' }])
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'interactive',
-            interactive: { button_reply: { id: 'negocio_uuid-123' } },
-        }))
-
-        const res = await POST(req)
+        const res = await postAndFlush(makeWhatsappBody({ type: 'interactive', interactive: { button_reply: { id: 'negocio_uuid-123' } } }))
         expect(res.status).toBe(200)
         expect(mockContactService.updateMatchConnectionType).toHaveBeenCalledWith('uuid-123', 'negocio')
         expect(mockWhatsappService.sendTextMessage).toHaveBeenCalled()
@@ -232,47 +203,24 @@ describe('POST - button reply', () => {
 
     it('updates connection_type to mentoria', async () => {
         mockContactService.updateMatchConnectionType.mockResolvedValue([{ id: 'm1' }])
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'interactive',
-            interactive: { button_reply: { id: 'mentoria_match-456' } },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'interactive', interactive: { button_reply: { id: 'mentoria_match-456' } } }))
         expect(mockContactService.updateMatchConnectionType).toHaveBeenCalledWith('match-456', 'mentoria')
     })
 
     it('updates connection_type to casual', async () => {
         mockContactService.updateMatchConnectionType.mockResolvedValue([{ id: 'm1' }])
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'interactive',
-            interactive: { button_reply: { id: 'casual_match-789' } },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'interactive', interactive: { button_reply: { id: 'casual_match-789' } } }))
         expect(mockContactService.updateMatchConnectionType).toHaveBeenCalledWith('match-789', 'casual')
     })
 
     it('does not send confirmation when update fails', async () => {
         mockContactService.updateMatchConnectionType.mockResolvedValue(null)
-
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'interactive',
-            interactive: { button_reply: { id: 'negocio_uuid-fail' } },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'interactive', interactive: { button_reply: { id: 'negocio_uuid-fail' } } }))
         expect(mockWhatsappService.sendTextMessage).not.toHaveBeenCalled()
     })
 
     it('does not call update when button ID has no underscore', async () => {
-        const req = makePostRequest(makeWhatsappBody({
-            type: 'interactive',
-            interactive: { button_reply: { id: 'nounderscore' } },
-        }))
-
-        await POST(req)
+        await postAndFlush(makeWhatsappBody({ type: 'interactive', interactive: { button_reply: { id: 'nounderscore' } } }))
         expect(mockContactService.updateMatchConnectionType).not.toHaveBeenCalled()
     })
 })
@@ -280,39 +228,21 @@ describe('POST - button reply', () => {
 describe('POST - edge cases', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        pendingAfter = []
     })
 
     it('returns 404 when body.object is not whatsapp_business_account', async () => {
-        const req = makePostRequest({ object: 'something_else' })
-        const res = await POST(req)
+        const res = await postAndFlush({ object: 'something_else' })
         expect(res.status).toBe(404)
     })
 
     it('returns 200 when no messages in entry', async () => {
-        const req = makePostRequest({
-            object: 'whatsapp_business_account',
-            entry: [{
-                changes: [{
-                    value: { messages: [] },
-                }],
-            }],
-        })
-
-        const res = await POST(req)
+        const res = await postAndFlush({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: { messages: [] } }] }] })
         expect(res.status).toBe(200)
     })
 
     it('returns 200 when messages array is missing', async () => {
-        const req = makePostRequest({
-            object: 'whatsapp_business_account',
-            entry: [{
-                changes: [{
-                    value: {},
-                }],
-            }],
-        })
-
-        const res = await POST(req)
+        const res = await postAndFlush({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {} }] }] })
         expect(res.status).toBe(200)
     })
 })
