@@ -122,7 +122,9 @@ export const whatsappService = {
      * Renderiza la foto de perfil del contacto, su nombre y los botones
      * "Mensaje" y "Añadir a un grupo" — igual al screenshot.
      */
-    async sendContactCard(toPhone: string, contactName: string, contactPhone: string) {
+    async sendContactCard(toPhone: string, contactName: string, contactPhone: string | null) {
+        if (!contactPhone) return
+
         const token = process.env.WHATSAPP_ACCESS_TOKEN
         const phoneId = process.env.WHATSAPP_PHONE_ID
 
