@@ -1,23 +1,20 @@
-# Networking Pro - Gestión de Contactos para Eventos
+# Joblify — Portal de Acreditación para Ferias de Empleo
 
-Esta plataforma web permite gestionar el networking en eventos profesionales de manera eficiente. Facilita la [carga de bases de datos de asistentes desde Excel](./data/README.md), genera credenciales con QR personalizados para impresión térmica, y rastrea conexiones a través de WhatsApp Business API con clasificación automática.
+Plataforma web para gestionar ferias de empleo: acreditación de candidatos con credenciales impresas, captura de leads por empresas vía escaneo QR, y clasificación de interés a través de WhatsApp Business API.
 
 ## Funcionalidades Principales
 
-- **Carga Masiva de Contactos**: Procesamiento de archivos `.csv` con mapeo inteligente de columnas (Nombre, Email, Teléfono, RUT, Empresa, Cargo). [Ver guía de carga](./data/README.md).
-- **Registro Manual**: Formulario web para crear contactos individuales desde el panel de administración.
-- **Credenciales con QR**: Generación de credenciales renderizadas en Canvas (nombre con word-wrap, empresa, línea divisoria y QR opcional) en formato 62mm x 62mm para etiquetas Brother QL-800.
-- **Impresión Térmica Directa**: Integración con **QZ Tray** mediante WebSocket con autenticación RSA SHA-512 (challenge-response). Detección automática de impresora Brother QL-800.
-- **Integración WhatsApp Business API**: Webhook que recibe mensajes entrantes, extrae tokens QR del formato `@XXXXXXXX`, crea registros de match, y envía mensajes interactivos con botones para clasificar la conexión (Negocio / Mentoría / Casual). Incluye envío de tarjeta de contacto (vCard).
-- **Dashboard de Matches**: Analítica en tiempo real con volumen total de conexiones, tasa de identificación, distribución por tipo de conexión (porcentajes con conteo al hacer hover), top 10 perfiles más conectados, e historial de actividad por usuario.
-- **Gestión de Autoridades**: Tabla separada para autoridades con carga masiva desde Excel y credenciales diferenciadas.
-- **Sistema de Identidad**: Reconocimiento basado en el número de WhatsApp del escáner, sin necesidad de login tradicional.
+- **Check-in de candidatos**: Búsqueda por RUT, nombre o teléfono. Genera credencial con QR en Canvas (62mm) e imprime directamente a impresora Brother QL-800 vía QZ Tray.
+- **Portal de empresas** (`/empresa/[token]`): Cada empresa tiene un link único para ver sus leads capturados, filtrarlos por área/experiencia/tipo de búsqueda y exportar CSV (requiere plan Basic o superior).
+- **Clasificación de interés vía WhatsApp**: El candidato escanea el QR de la empresa → recibe mensaje interactivo con botones (Muy interesado / Quiero más info / Solo explorando) → la respuesta queda registrada automáticamente.
+- **Carga masiva de contactos**: Importación desde Excel/CSV con mapeo inteligente de columnas y manejo de colisiones de `qr_token`.
+- **Registro manual**: Formulario web para crear candidatos o empresas desde el panel de administración.
+- **Dashboard de matches**: Estadísticas agregadas en tiempo real (total, distribución por tipo, tasa de adopción, top 20 empresas) usando una RPC optimizada — sin cargar tabla completa.
+- **Gestión de autoridades**: Tabla separada con carga masiva y credenciales diferenciadas para VIPs/autoridades.
 
 ---
 
 ## Stack Tecnológico
-
-### Core
 
 | Tecnología | Versión | Uso |
 |------------|---------|-----|
@@ -25,104 +22,108 @@ Esta plataforma web permite gestionar el networking en eventos profesionales de 
 | React | 19 | UI |
 | TypeScript | 5 | Tipado estático |
 | Tailwind CSS | 4 | Estilos |
+| Supabase / PostgreSQL | — | Base de datos |
+| WhatsApp Business API | — | Mensajería y clasificación |
+| QZ Tray | 2.2 | Impresión térmica directa |
+| Vitest | 4 | Testing |
 
-### Librerías
+### Dependencias relevantes
 
 | Librería | Uso |
 |----------|-----|
-| [@supabase/supabase-js](https://supabase.com/) | Cliente PostgreSQL (base de datos) |
-| [exceljs](https://github.com/exceljs/exceljs) | Lectura y procesamiento de archivos Excel |
-| [qrcode](https://github.com/soldair/node-qrcode) | Generación de códigos QR |
-| [qz-tray](https://qz.io/) | Comunicación WebSocket con impresoras térmicas |
-| [jspdf](https://github.com/parallax/jsPDF) | Generación de PDF como fallback de impresión |
-| [framer-motion](https://www.framer.com/motion/) | Animaciones |
-| [lucide-react](https://lucide.dev/) | Iconos |
-| [vitest](https://vitest.dev/) | Testing unitario e integración |
+| `@supabase/supabase-js` | Cliente PostgreSQL |
+| `exceljs` | Lectura de archivos Excel/CSV |
+| `qrcode` | Generación de códigos QR |
+| `qz-tray` | WebSocket con impresoras térmicas (RSA SHA-512) |
+| `jspdf` | PDF como fallback de impresión |
+| `framer-motion` | Animaciones |
+| `lucide-react` | Iconos |
 
 ---
 
 ## Estructura del Proyecto
 
 ```
-networking-pro/
+joblify/
 ├── app/
-│   ├── page.tsx                        # Portal de check-in (buscar e imprimir credenciales)
-│   ├── layout.tsx                      # Layout raíz
-│   ├── globals.css
-│   ├── api/
-│   │   ├── qz-sign/route.ts            # Firma RSA para QZ Tray
-│   │   └── whatsapp/webhook/route.ts   # Webhook WhatsApp Business API
-│   ├── admin/
-│   │   ├── page.tsx                    # Dashboard admin (carga de datos)
-│   │   ├── contactos/[id]/page.tsx     # Página de credencial individual
-│   │   ├── autoridades/page.tsx        # Gestión de autoridades
-│   │   └── registro-manual/page.tsx    # Registro manual de contactos
+│   ├── page.tsx                        # Check-in: búsqueda e impresión de credenciales
+│   ├── layout.tsx
+│   ├── empresa/[token]/page.tsx        # Portal de empresa: leads, filtros, exportación CSV
 │   ├── connect/[id]/page.tsx           # Landing del escaneo QR (redirige a WhatsApp)
 │   ├── matches/page.tsx                # Dashboard analítico de conexiones
-│   ├── components/
-│   │   ├── FileUpload.tsx              # Carga de archivos CSV/Excel de contactos
-│   │   ├── ContactTable.tsx            # Tabla paginada de contactos con búsqueda
-│   │   ├── AuthorityTable.tsx          # Tabla de autoridades
-│   │   ├── AuthorityFileUpload.tsx     # Carga de archivos CSV/Excel de autoridades
-│   │   ├── IdentityStatus.tsx          # Badge de identidad del usuario
-│   │   ├── AdminNavbar.tsx             # Navegación admin compartida
-│   │   └── ui/Input.tsx                # Componente input reutilizable
-│   └── actions/
-│       ├── contacts.ts                 # Server actions para contactos
-│       ├── contactsParser.ts           # Parsing y mapeo de columnas CSV/Excel (contactos)
-│       ├── authorities.ts              # Server actions para autoridades
-│       └── authoritiesParser.ts        # Parsing y mapeo de columnas CSV/Excel (autoridades)
+│   ├── admin/
+│   │   ├── page.tsx                    # Dashboard admin (carga de datos, tabla de contactos)
+│   │   ├── contactos/[id]/page.tsx     # Credencial individual + impresión
+│   │   ├── autoridades/page.tsx        # Gestión de autoridades
+│   │   └── registro-manual/page.tsx   # Registro manual de contactos
+│   ├── api/
+│   │   ├── contacts/route.ts           # GET paginado con búsqueda (usado por ContactTable)
+│   │   ├── qz-sign/route.ts            # Firma RSA para QZ Tray
+│   │   └── whatsapp/webhook/route.ts   # Webhook WhatsApp Business API
+│   ├── actions/
+│   │   ├── contacts.ts                 # Server actions para contactos
+│   │   ├── contactsParser.ts           # Parsing y mapeo de columnas CSV/Excel
+│   │   ├── authorities.ts              # Server actions para autoridades
+│   │   └── authoritiesParser.ts        # Parsing CSV/Excel de autoridades
+│   └── components/
+│       ├── ContactTable.tsx            # Tabla paginada con búsqueda en tiempo real
+│       ├── FileUpload.tsx              # Carga de archivos de contactos
+│       ├── AuthorityTable.tsx          # Tabla de autoridades con impresión
+│       ├── AuthorityFileUpload.tsx     # Carga de archivos de autoridades
+│       ├── IdentityStatus.tsx          # Badge de identidad del usuario
+│       ├── AdminNavbar.tsx             # Navegación del panel admin
+│       └── ui/Input.tsx
 ├── lib/
-│   ├── supabase.ts                     # Cliente Supabase
+│   ├── supabase.ts                     # Cliente público Supabase
+│   ├── supabaseAdmin.ts                # Cliente admin (service_role, lazy singleton)
 │   ├── qz.ts                           # Integración QZ Tray
-│   ├── credentialRenderer.ts           # Renderizado de credenciales en Canvas
-│   ├── authorityCredentialRenderer.ts  # Credenciales de autoridades
-│   ├── certs/
-│   │   └── qz-private-key.ts          # Clave privada RSA para firma QZ Tray
+│   ├── credentialRenderer.ts           # Canvas 732×732px → badge 62mm Brother QL-800
+│   ├── authorityCredentialRenderer.ts  # Canvas para autoridades
+│   ├── certs/qz-private-key.ts         # Clave privada RSA para QZ Tray
 │   ├── templates/
 │   │   └── whatsappTemplates.ts        # Plantillas de mensajes WhatsApp
 │   └── services/
-│       ├── contactService.ts           # Queries de contactos
-│       ├── whatsappService.ts          # Integración WhatsApp API
-│       └── authorityService.ts         # Queries de autoridades
+│       ├── contactService.ts           # CRUD, búsqueda, matches, portal empresas
+│       ├── whatsappService.ts          # Envío de mensajes (texto, interactivos, vCard)
+│       └── authorityService.ts         # CRUD autoridades
+├── scripts/
+│   ├── clean-duplicates.ts             # Ejecuta RPC remove_duplicate_contacts
+│   ├── load-test.ts                    # Simula N escaneos concurrentes al webhook
+│   ├── test-edge-cases.ts              # Valida webhook con datos incompletos
+│   ├── test-whatsapp.ts                # Test de envío de mensajes WhatsApp
+│   └── migration-feria-empleo.sql      # Migración SQL del esquema de la feria
 ├── data/
 │   ├── README.md                       # Guía de formato y columnas aceptadas
-│   ├── asistente_FIT.csv               # Plantilla de ejemplo para asistentes
-│   ├── autoridades_FIT.csv             # Plantilla de ejemplo para autoridades
 │   └── schema.json                     # Esquema de validación de columnas
-├── scripts/
-│   ├── clean-duplicates.ts             # Limpieza de contactos duplicados
-│   ├── test-whatsapp.ts                # Test de envío de mensajes WhatsApp
-│   └── test-wa.ts                      # Test auxiliar de WhatsApp API
-├── certificates/                       # Certificados locales QZ Tray (no versionados)
-│   ├── digital-certificate.txt
-│   └── private-key.pem
-└── public/
-    └── digital-certificate.txt         # Certificado público QZ Tray
+└── __test__/                           # Tests Vitest
 ```
 
 ---
 
 ## Arquitectura de Datos (Supabase / PostgreSQL)
 
-La persistencia de datos utiliza PostgreSQL sobre Supabase, con un esquema diseñado para alta disponibilidad de lectura y trazabilidad de conexiones sin autenticación tradicional.
-
 ### Tablas
 
-**`contacts`** — Asistentes del evento
+**`contacts`** — Candidatos y empresas del evento
 
 | Campo | Tipo | Notas |
 |-------|------|-------|
-| `id` | `uuid` | PK, generado automáticamente |
+| `id` | `uuid` | PK |
 | `name` | `text` | Nombre completo |
 | `first_name` / `last_name` | `text` | Opcionales |
 | `email` | `text` | Opcional |
-| `phone` | `text` | WhatsApp normalizado |
+| `phone` | `text` | Normalizado a E.164 (`+569XXXXXXXX`) |
 | `rut` | `text` | RUT/DNI/Pasaporte, opcional |
-| `qr_token` | `text` | Único, 10 chars (`generate_uid`) |
+| `qr_token` | `text` | Único, 10 chars — identifica la credencial impresa |
 | `company` | `text` | Empresa u organización |
 | `position` | `text` | Cargo |
-| `industry` / `profile` | `text` | Opcionales |
+| `profile` | `text` | Área profesional |
+| `industry` | `text` | Sector |
+| `experience_level` | `text` | Nivel de experiencia |
+| `job_search_type` | `text` | Tipo de búsqueda laboral |
+| `opportunity_description` | `text` | Descripción de oportunidades (empresas) |
+| `access_token` | `text` | Token único para link de portal de empresa |
+| `plan` | `text` | `free` \| `basic` \| `pro` \| `premium` |
 | `created_at` | `timestamptz` | Automático |
 
 **`matches`** — Conexiones registradas por escaneo QR
@@ -130,8 +131,8 @@ La persistencia de datos utiliza PostgreSQL sobre Supabase, con un esquema dise�
 | Campo | Tipo | Notas |
 |-------|------|-------|
 | `id` | `uuid` | PK |
-| `contact_id` | `uuid` | FK → contacto escaneado |
-| `scanner_id` | `uuid` | FK → contacto que escaneó (nullable) |
+| `contact_id` | `uuid` | FK → empresa cuyo QR fue escaneado |
+| `scanner_id` | `uuid` | FK → candidato que escaneó (nullable) |
 | `scanner_phone` | `text` | Fallback si no hay `scanner_id` |
 | `connection_type` | `text` | `negocio` \| `mentoria` \| `casual` |
 | `created_at` | `timestamptz` | Automático |
@@ -146,35 +147,20 @@ La persistencia de datos utiliza PostgreSQL sobre Supabase, con un esquema dise�
 | `organization` | `text` | Organización |
 | `created_at` | `timestamptz` | Automático |
 
-### Permisos de Base de Datos (RLS)
+### Acceso a Base de Datos
 
-La app **no tiene sistema de login**. El acceso a Supabase se divide en dos capas según el origen de la operación:
+La app no tiene login de usuarios. El acceso a Supabase se divide en dos capas:
 
-- **`anon key`** (pública, visible en el browser): solo puede leer datos.
-- **`service_role key`** (privada, solo server-side vía Server Actions): puede escribir. Nunca se expone al browser.
+- **`anon key`** (pública, browser): solo lectura.
+- **`service_role key`** (privada, solo Server Actions): escritura. Nunca se expone al browser.
 
---------------------------------------
-
-- **`contacts`**: No se pueden editar ni borrar desde el cliente.
-- **`matches`**: Cualquiera puede crear una conexión. La clasificación (negocio/mentoría/casual) llega después desde el webhook de WhatsApp, que corre en el servidor.
-- **`authorities`**: Lectura pública para mostrar la lista en el panel. Escritura y borrado solo desde el servidor via `supabaseAdmin` (cliente con `service_role`).
-
-### Lógica de Base de Datos y Funciones SQL
-
-Se utilizan funciones personalizadas en PL/pgSQL para automatizar procesos críticos:
+### Funciones SQL (PL/pgSQL)
 
 | Función | Propósito |
 |---------|-----------|
-| `generate_uid(length)` | Genera tokens alfanuméricos únicos para los códigos QR, minimizando colisiones. |
-| `remove_duplicate_contacts()` | Limpieza inteligente basada en coincidencia de Nombre + Email/Teléfono. |
-| `purge_contacts()` | Reseteo controlado de la base de datos para nuevos eventos. |
-
-### Identificación de Usuario "Sin Login"
-
-La arquitectura soporta un flujo de identidad híbrido:
-1. **Identidad Persistente**: Al escanear por primera vez, se asocia el `scanner_phone` (desde WhatsApp) con un registro en `contacts`.
-2. **Fallback por Token**: Si el usuario no está en la base, se utiliza su número de teléfono como identificador único en la tabla `matches` hasta que complete su perfil.
-3. **Constraint de Unicidad**: El campo `qr_token` garantiza que cada credencial impresa sea única y rastreable permanentemente.
+| `generate_uid(length)` | Genera tokens alfanuméricos únicos para QR |
+| `remove_duplicate_contacts()` | Limpieza basada en Nombre + Email/Teléfono |
+| `get_matches_dashboard()` | Stats agregadas + top 20 empresas en una sola query RPC |
 
 ---
 
@@ -182,157 +168,142 @@ La arquitectura soporta un flujo de identidad híbrido:
 
 | Ruta | Descripción |
 |------|-------------|
-| `/` | Portal de check-in (búsqueda e impresión de credenciales) |
-| `/connect/[id]` | Landing de escaneo QR (registra match y redirige a WhatsApp) |
-| `/admin` | Dashboard de administración con carga de Excel |
-| `/admin/contactos/[id]` | Credencial individual de un contacto |
+| `/` | Check-in: búsqueda por RUT/nombre/teléfono e impresión de credencial |
+| `/empresa/[token]` | Portal de empresa: leads capturados, filtros, exportación CSV |
+| `/connect/[id]` | Landing del escaneo QR (registra match y redirige a WhatsApp) |
+| `/matches` | Dashboard analítico de conexiones (protegido con Basic Auth) |
+| `/admin` | Panel de administración (protegido con Basic Auth) |
+| `/admin/contactos/[id]` | Credencial individual con impresión |
 | `/admin/registro-manual` | Formulario de registro manual |
 | `/admin/autoridades` | Gestión de autoridades y VIPs |
-| `/matches` | Dashboard analítico de conexiones |
+| `GET /api/contacts` | Lista paginada con búsqueda (usada por ContactTable) |
 | `POST /api/qz-sign` | Firma server-side del challenge RSA para QZ Tray |
-| `GET/POST /api/whatsapp/webhook` | Webhook de WhatsApp (verificación y recepción de mensajes) |
+| `GET/POST /api/whatsapp/webhook` | Webhook WhatsApp Business API |
 
 ---
 
-## Flujo de Trabajo
+## Flujo Principal
 
-### Escaneo y Registro de Match
+### Check-in de candidato
+1. El operador busca al candidato por RUT, nombre o teléfono en `/`.
+2. Se genera una credencial en Canvas (nombre, empresa, QR) de 62mm.
+3. Se imprime directo a Brother QL-800 vía QZ Tray. Si falla, descarga PDF.
 
-1. El usuario escanea un QR físico que contiene un enlace a `/connect/[qr_token]`.
-2. Se registra un match en la base de datos asociado al token del QR escaneado.
-3. Se redirige al usuario a WhatsApp con un mensaje personalizado para completar la identificación.
+### Captura de lead (empresa escanea candidato)
+1. El candidato escanea el QR de la empresa → llega a `/connect/[qr_token]`.
+2. Se registra un match en la base de datos.
+3. El candidato es redirigido a WhatsApp con el token en el mensaje.
+4. El webhook recibe el mensaje, envía botones interactivos de interés.
+5. Al seleccionar un botón, se actualiza `connection_type` del match.
+6. Se envía la tarjeta de contacto (vCard) del representante de la empresa.
 
-### Clasificación de Conexión vía WhatsApp
+### Portal de empresa
+1. El admin genera un link único desde `/admin/contactos/[id]`.
+2. La empresa accede a `/empresa/[token]` sin login.
+3. Ve sus leads con filtros por área, experiencia y tipo de búsqueda.
+4. Con plan Basic o superior puede exportar CSV.
 
-1. El webhook recibe el mensaje entrante con el token QR (formato `@XXXXXXXX`).
-2. Se crea el registro de match vinculando scanner con el contacto del QR.
-3. Se envía un mensaje interactivo con botones: **Negocio** / **Mentoría** / **Casual**.
-4. Al seleccionar una opción, se actualiza el `connection_type` del match.
-5. Se envía la tarjeta de contacto (vCard) del dueño del QR.
+### Modos de salida para credenciales
 
-### Modos de Salida para Credenciales
-
-- `NEXT_PUBLIC_QR_OUTPUT_MODE=PRINT`: Imprime via QZ Tray; si falla, ofrece PDF.
-- `NEXT_PUBLIC_QR_OUTPUT_MODE=PDF`: Descarga directamente el PDF.
-
----
-
-## Testing
-
-Tests unitarios y de integración con **Vitest**. Los test files están co-ubicados junto a su código fuente.
-
-```bash
-npm test          # Ejecutar todos los tests
-npm run test:watch # Modo watch
+```env
+NEXT_PUBLIC_QR_OUTPUT_MODE=PRINT   # Imprime via QZ Tray; fallback PDF si falla
+NEXT_PUBLIC_QR_OUTPUT_MODE=PDF     # Descarga directamente el PDF
 ```
 
-**Cobertura de tests:**
-
-| Archivo | Tests | Tipo |
-|---------|-------|------|
-| `lib/services/whatsappService.test.ts` | 8 | Normalización de teléfonos chilenos |
-| `lib/services/contactService.test.ts` | 10 | Búsqueda por identificador (mock Supabase) |
-| `lib/services/whatsappService.integration.test.ts` | 6 | Envío de contact card (mock fetch) |
-| `app/api/whatsapp/webhook/route.test.ts` | 17 | Webhook GET/POST handlers |
-| `app/actions/contacts.test.ts` | 30 | Parsing CSV/Excel, mapeo de columnas |
-| `lib/credentialRenderer.test.ts` | 7 | Word-wrap de texto en canvas |
-
 ---
 
-## Configuración Local
+## Seguridad
 
-1. Clonar el repositorio.
-2. Instalar dependencias:
-   ```bash
-   npm install
-   ```
-3. Configurar las variables de entorno en `.env`:
-   ```env
-   # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=
-   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=
-   SUPABASE_SERVICE_ROLE_KEY= # Requerido para scripts de mantenimiento
+### Basic Auth (admin y matches)
 
-   # QR / Impresión
-   NEXT_PUBLIC_QR_OUTPUT_MODE=PRINT
-   NEXT_PUBLIC_PRINTER_NAME=Brother QL-800
-
-   # WhatsApp Business API
-   WHATSAPP_ACCESS_TOKEN=
-   WHATSAPP_PHONE_ID=
-   WHATSAPP_VERIFY_TOKEN=
-   NEXT_PUBLIC_WHATSAPP_NUM_BUSINESS=
-
-   # QZ Tray (clave privada RSA para firma de challenges)
-   QZ_PRIVATE_KEY=
-   ```
-4. Iniciar el servidor de desarrollo:
-   ```bash
-   npm run dev
-   ```
-
----
-
-## Seguridad y Acceso Admin
-
-### Credenciales de Acceso
-
-Las rutas `/admin` y `/matches` están protegidas con HTTP Basic Auth. El navegador mostrará un popup de usuario y contraseña al intentar acceder.
-
-| Campo    | Valor por defecto        |
-|----------|--------------------------|
-| Usuario  | `x_connect_master77`     |
-| Password | `zQ#9mKdL!2vP$wN@xT`    |
-
-Para cambiar las credenciales sin tocar el código, definir en `.env` o en Vercel → Settings → Environment Variables:
+Las rutas `/admin` y `/matches` están protegidas con HTTP Basic Auth definido en `proxy.ts`.
 
 ```env
 ADMIN_USERNAME=tu_usuario
 ADMIN_PASSWORD=tu_contraseña
 ```
 
-Si esas variables no están definidas, se usan los valores de la tabla anterior.
-
----
-
 ### Rate Limiting
-
-El archivo `proxy.ts` incluye protección automática contra abuso de los endpoints de API. Funciona así:
-
-**¿Qué hace?**
-Cuenta cuántas veces una misma IP hace requests en una ventana de 60 segundos. Si supera el límite, devuelve `429 Too Many Requests` y bloquea esa IP hasta que pase el minuto.
-
-**Límites configurados:**
 
 | Endpoint | Límite |
 |----------|--------|
-| `/api/whatsapp/webhook` | 60 requests / minuto por IP |
-| `/api/contacts` | 120 requests / minuto por IP |
-| Resto de `/api/` | 300 requests / minuto por IP |
-
-**Ejemplo concreto:**
-Un asistente escanea su QR con WhatsApp → llega un webhook → cuenta como 1 request de esa IP. Si el mismo número envía más de 60 mensajes en un minuto (imposible en uso normal), se bloquea automáticamente.
-
-**Importante:** el rate limiting es por instancia del servidor. En Vercel Pro con múltiples instancias edge, cada instancia tiene su propio contador independiente, por lo que los límites efectivos pueden ser un poco más altos en producción. Para el evento de 2000 personas es suficiente.
+| `/api/whatsapp/webhook` | 60 req/min por IP |
+| `/api/contacts` | 120 req/min por IP |
+| Resto de `/api/` | 300 req/min por IP |
 
 ---
 
-## Scripts de Mantenimiento
-
-Existen scripts en la carpeta `scripts/` para tareas administrativas. Para ejecutarlos se recomienda usar `tsx`:
+## Testing
 
 ```bash
-# Limpiar contactos duplicados (usa el procedimiento almacenado remove_duplicate_contacts)
+npm test            # Todos los tests
+npm run test:watch  # Modo watch
+```
+
+| Archivo | Tipo |
+|---------|------|
+| `webhook_route.test.ts` | Handlers GET/POST del webhook WhatsApp |
+| `contacts.test.ts` | Parsing CSV/Excel, mapeo de columnas |
+| `edgeCases.test.ts` | Datos incompletos (null phone, null company, etc.) |
+| `contactService.test.ts` | Búsqueda por RUT/email/teléfono |
+| `credentialRenderer.test.ts` | Word-wrap de texto en Canvas |
+| `whatsappService.test.ts` | Normalización de teléfonos chilenos |
+| `whatsappService.integration.test.ts` | Envío de mensajes (mock fetch) |
+
+---
+
+## Configuración Local
+
+```bash
+npm install
+npm run dev
+```
+
+Variables de entorno en `.env.local`:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# WhatsApp Business API
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_ID=
+WHATSAPP_VERIFY_TOKEN=
+NEXT_PUBLIC_WHATSAPP_NUM_BUSINESS=
+
+# Impresión
+NEXT_PUBLIC_QR_OUTPUT_MODE=PRINT
+NEXT_PUBLIC_PRINTER_NAME=Brother QL-800
+QZ_PRIVATE_KEY=
+
+# Admin
+ADMIN_USERNAME=
+ADMIN_PASSWORD=
+```
+
+---
+
+## Scripts de Utilidad
+
+```bash
+# Limpiar duplicados en la base de datos
 npx tsx scripts/clean-duplicates.ts
 
-# Test de envío de mensajes por WhatsApp
+# Test de integración WhatsApp
 npx tsx scripts/test-whatsapp.ts
+
+# Load test (simula 50 escaneos concurrentes al webhook)
+npx tsx scripts/load-test.ts
+npx tsx scripts/load-test.ts --n=100 --url=http://localhost:3000
+
+# Test de casos borde (datos incompletos)
+npx tsx scripts/test-edge-cases.ts --url=http://localhost:3000
 ```
 
 ---
 
 ## Despliegue
 
-La aplicación está configurada para desplegarse en **Vercel** con soporte nativo de Next.js. Las páginas de admin y matches usan `force-dynamic` para asegurar datos siempre actualizados.
-
-Cada commit directo a la rama `main` dispara automáticamente un deploy a producción. No es necesario ningún paso manual — el pipeline de Vercel toma el commit, construye la app y la publica.
+Configurado para **Vercel**. Cada commit a `main` dispara un deploy automático a producción.
