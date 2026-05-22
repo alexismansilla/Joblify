@@ -304,6 +304,6 @@ npx tsx scripts/test-edge-cases.ts --url=http://localhost:3000
 
 ---
 
-## Despliegue
+## Estado del Proyecto
 
-Configurado para **Vercel**. Cada commit a `main` dispara un deploy automático a producción.
+Actualmente en **fase de pruebas local**. No hay despliegue activo en producción.
