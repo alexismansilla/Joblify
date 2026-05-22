@@ -17,7 +17,15 @@ interface Contact {
     company?: string | null
     position?: string | null
     qr_token?: string | null
+    plan?: string | null
+    access_token?: string | null
     created_at?: string
+}
+
+const PLAN_LABELS: Record<string, string> = {
+    basic: 'BASIC',
+    pro: 'PRO',
+    premium: 'PREMIUM',
 }
 
 const ITEMS_PER_PAGE = 50
@@ -142,6 +150,11 @@ export default function ContactTable() {
                                                 )}
                                                 {contact.company && (
                                                     <span className="font-mono text-[10px] opacity-50 tracking-widest">{contact.company}</span>
+                                                )}
+                                                {contact.plan && contact.plan !== 'free' && PLAN_LABELS[contact.plan] && (
+                                                    <span className="inline-block mt-1 px-1.5 py-0.5 bg-black dark:bg-white text-white dark:text-black font-mono text-[9px] font-bold uppercase tracking-widest w-fit">
+                                                        {PLAN_LABELS[contact.plan]}
+                                                    </span>
                                                 )}
                                                 {!contact.position && !contact.company && (
                                                     <span className="font-mono text-[10px] opacity-30">—</span>

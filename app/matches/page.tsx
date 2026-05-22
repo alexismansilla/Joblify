@@ -24,10 +24,10 @@ export default async function MatchesDashboard() {
         : 0
 
     const connectionTypesCount = {
-        negocio: stats.negocio,
-        mentoria: stats.mentoria,
-        casual: stats.casual,
-        'no registrado': stats.no_registrado,
+        'muy interesado': stats.negocio,
+        'quiere más info': stats.mentoria,
+        'solo explorando': stats.casual,
+        'sin clasificar': stats.no_registrado,
     }
 
     return (
@@ -44,7 +44,7 @@ export default async function MatchesDashboard() {
                     {/* Volumen de conexiones */}
                     <div className="group relative p-12 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-500 flex flex-col justify-between min-h-[250px]">
                         <div className="flex justify-between items-start">
-                            <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">VOLUMEN DE CONEXIONES Y ENLACES</p>
+                            <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">LEADS CAPTURADOS EN LA FERIA</p>
                             <Users className="w-8 h-8 opacity-20" strokeWidth={1} />
                         </div>
                         <div className="flex flex-col gap-1 mt-8">
@@ -54,7 +54,7 @@ export default async function MatchesDashboard() {
                                 </span>
                             </div>
                             <span className="font-mono text-[10px] tracking-widest uppercase opacity-40 mt-2">
-                                INTERACCIONES TOTALES ACUMULADAS EN LA RED
+                                REGISTROS DE INTERÉS ACUMULADOS EN LA FERIA
                             </span>
                         </div>
                     </div>
@@ -62,7 +62,7 @@ export default async function MatchesDashboard() {
                     {/* Tasa de adopción */}
                     <div className="group relative p-12 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-500 flex flex-col justify-between min-h-[250px]">
                         <div className="flex justify-between items-start">
-                            <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">TASA DE ADOPCIÓN (PARTICIPACIÓN ACTIVA)</p>
+                            <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-50 w-2/3">TASA DE PARTICIPACIÓN ACTIVA</p>
                             <Target className="w-8 h-8 opacity-20" strokeWidth={1} />
                         </div>
                         <div className="flex flex-col gap-1 mt-8">
@@ -72,7 +72,7 @@ export default async function MatchesDashboard() {
                                 </span>
                             </div>
                             <span className="font-mono text-[10px] tracking-widest uppercase opacity-40 mt-2">
-                                {stats.active_contacts} de {stats.total_contacts} asistentes lograron al menos 1 enlace
+                                {stats.active_contacts} de {stats.total_contacts} candidatos con al menos 1 registro de interés
                             </span>
                         </div>
                     </div>
@@ -108,13 +108,13 @@ export default async function MatchesDashboard() {
                 <div className="mb-12">
                     <h3 className="text-3xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3 border-b border-black/10 dark:border-white/10 pb-4">
                         <span className="w-3 h-3 bg-black dark:bg-white animate-pulse"></span>
-                        TOP 20 PERFILES CON MÁS CONEXIONES
+                        TOP 20 EMPRESAS CON MÁS LEADS CAPTURADOS
                     </h3>
 
                     {topContacts.length === 0 ? (
                         <div className="w-full p-12 border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 flex flex-col items-center justify-center min-h-[300px]">
                             <Users className="w-12 h-12 opacity-20 mb-4" strokeWidth={1} />
-                            <p className="font-mono text-sm tracking-widest uppercase opacity-50 text-center">NO HAY ACTIVIDAD DE MATCHES REGISTRADA</p>
+                            <p className="font-mono text-sm tracking-widest uppercase opacity-50 text-center">NO HAY LEADS REGISTRADOS AÚN</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -145,7 +145,7 @@ export default async function MatchesDashboard() {
                                                     <span className="text-5xl font-black tracking-tighter leading-none text-emerald-500/70 dark:text-emerald-400/70">
                                                         {user.match_count}
                                                     </span>
-                                                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest mt-2 opacity-50">MATCH REGISTRADOS</span>
+                                                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest mt-2 opacity-50">LEADS CAPTURADOS</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4 align-top">

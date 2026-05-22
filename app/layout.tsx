@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Connectify",
-  description: "Modern networking tool for managing event contacts, generating QR codes, and tracking matches.",
+  title: "Joblify",
+  description: "Portal de acreditación y gestión de candidatos para ferias de empleo.",
 };
 
 export default function RootLayout({

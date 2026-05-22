@@ -26,9 +26,9 @@ export default async function Home() {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-6 border-b border-black/10 dark:border-white/10 gap-4">
             <div className="flex items-center gap-4">
               <div className="flex flex-col">
-                <h3 className="text-3xl font-black tracking-tighter uppercase">Asistentes Registrados</h3>
+                <h3 className="text-3xl font-black tracking-tighter uppercase">Candidatos Registrados</h3>
                 <p className="font-mono text-[10px] tracking-widest uppercase opacity-50 mt-1 flex items-center gap-2">
-                  <Users className="w-3 h-3" /> Base de Datos Actual
+                  <Users className="w-3 h-3" /> Base de Datos · Feria de Empleo
                 </p>
               </div>
             </div>
@@ -36,7 +36,7 @@ export default async function Home() {
               <span className="text-5xl font-black leading-none tracking-tighter">
                 {total}
               </span>
-              <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Total Asistentes</span>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Total Candidatos</span>
             </div>
           </div>
 

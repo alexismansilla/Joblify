@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export interface Contact {
     id: string;
@@ -12,6 +13,11 @@ export interface Contact {
     position: string | null;
     profile: string | null;
     industry: string | null;
+    experience_level: string | null;
+    job_search_type: string | null;
+    opportunity_description: string | null;
+    access_token: string | null;
+    plan: string | null;
     qr_token: string | null;
     created_at?: string;
 }
@@ -71,7 +77,7 @@ export const contactService = {
         const from = (page - 1) * limit;
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, created_at')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, plan, access_token, created_at')
             .order('created_at', { ascending: false })
             .range(from, from + limit - 1);
 
@@ -84,7 +90,7 @@ export const contactService = {
         const q = query.trim();
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, created_at')
+            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, plan, access_token, created_at')
             .or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,rut.ilike.%${q}%,company.ilike.%${q}%,position.ilike.%${q}%`)
             .order('created_at', { ascending: false })
             .range(from, from + limit - 1);
@@ -129,18 +135,6 @@ export const contactService = {
             .from('contacts')
             .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
             .eq('qr_token', qrToken)
-            .maybeSingle();
-
-        if (error) throw error;
-        return data;
-    },
-
-
-    async getByEmail(email: string) {
-        const { data, error } = await supabase
-            .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
-            .eq('email', email)
             .maybeSingle();
 
         if (error) throw error;
@@ -250,6 +244,56 @@ export const contactService = {
         return data;
     },
 
+    async getByAccessToken(token: string) {
+        const { data, error } = await supabase
+            .from('contacts')
+            .select('id, name, first_name, last_name, email, phone, company, position, profile, industry, opportunity_description, plan, qr_token, access_token')
+            .eq('access_token', token)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async getLeadsForCompany(companyContactId: string) {
+        const { data, error } = await supabase
+            .from('matches')
+            .select(`
+                id,
+                created_at,
+                connection_type,
+                scanner_phone,
+                scanner:contacts!matches_scanner_id_fkey (
+                    id, name, email, phone, profile, experience_level, job_search_type
+                )
+            `)
+            .eq('contact_id', companyContactId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data ?? [];
+    },
+
+    async generateAccessToken(contactId: string): Promise<string> {
+        const token = crypto.randomUUID();
+        const { error } = await getSupabaseAdmin()
+            .from('contacts')
+            .update({ access_token: token })
+            .eq('id', contactId);
+
+        if (error) throw error;
+        return token;
+    },
+
+    async updatePlan(contactId: string, plan: string): Promise<void> {
+        const { error } = await getSupabaseAdmin()
+            .from('contacts')
+            .update({ plan })
+            .eq('id', contactId);
+
+        if (error) throw error;
+    },
+
     async updateMatchConnectionType(matchId: string, connectionType: string) {
         const { data, error } = await supabase
             .from('matches')
@@ -262,58 +306,6 @@ export const contactService = {
             return null;
         }
         return data;
-    },
-
-    async getMatchesReport() {
-        let allData: any[] = [];
-        let from = 0;
-        const pageSize = 1000;
-        let hasMore = true;
-
-        while (hasMore) {
-            const { data, error } = await supabase
-                .from('contacts')
-                .select(`
-                    id,
-                    name,
-                    first_name,
-                    last_name,
-                    email,
-                    phone,
-                    rut,
-                    company,
-                    position,
-                    qr_token,
-                    matches:matches!matches_contact_id_fkey (
-                        id,
-                        created_at,
-                        scanner_id,
-                        scanner_phone,
-                        connection_type,
-                        scanner:contacts!matches_scanner_id_fkey (
-                            id,
-                            name
-                        )
-                    )
-                `)
-                .order('name', { ascending: true })
-                .range(from, from + pageSize - 1);
-
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-                allData = [...allData, ...data];
-                if (data.length < pageSize) {
-                    hasMore = false;
-                } else {
-                    from += pageSize;
-                }
-            } else {
-                hasMore = false;
-            }
-        }
-
-        return allData || [];
     },
 
     async getMatchesDashboard() {

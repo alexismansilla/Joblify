@@ -42,7 +42,7 @@ function requireBasicAuth(req: NextRequest): NextResponse | null {
     return new NextResponse('Authentication Required', {
         status: 401,
         headers: {
-            'WWW-Authenticate': 'Basic realm="Connectify Admin"',
+            'WWW-Authenticate': 'Basic realm="Joblify Admin"',
         },
     })
 }

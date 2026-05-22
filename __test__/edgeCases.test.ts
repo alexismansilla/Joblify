@@ -56,59 +56,46 @@ function makeWhatsappTextBody(from: string, text: string) {
 // ─── 1. buildProfileMessageText — campos nulos muestran N/A ──────────────────
 
 describe('buildProfileMessageText — campos nulos', () => {
-    it('muestra N/A en todos los campos cuando el contacto solo tiene nombre', () => {
+    it('con solo nombre usa el nombre como empresa y representante', () => {
         const msg = buildProfileMessageText({ name: 'Francisca Paris' })
-        expect(msg).toContain('👤 *Nombre:* Francisca Paris')
-        expect(msg).toContain('📱 *Teléfono:* N/A')
-        expect(msg).toContain('📧 *Email:* N/A')
-        expect(msg).toContain('🧑‍💻 *Perfil:* N/A')
-        expect(msg).toContain('💼 *Empresa:* N/A')
-        expect(msg).toContain('👔 *Cargo:* N/A')
-        expect(msg).toContain('🏭 *Industria:* N/A')
+        expect(msg).toContain('🏢 *Empresa:* Francisca Paris')
+        expect(msg).toContain('👤 *Representante:* Francisca Paris')
+        expect(msg).not.toContain('N/A')
     })
 
-    it('muestra N/A solo en campos faltantes, respeta los que sí existen', () => {
+    it('con company null usa el nombre como fallback de empresa', () => {
         const msg = buildProfileMessageText({
             name: 'Francisca Paris',
-            phone: null,
-            email: 'franciscaparis@gmail.com',
             company: null,
             position: null,
-            profile: 'Ecosistema',
-            industry: null,
         })
-        expect(msg).toContain('📱 *Teléfono:* N/A')
-        expect(msg).toContain('📧 *Email:* franciscaparis@gmail.com')
-        expect(msg).toContain('🧑‍💻 *Perfil:* Ecosistema')
-        expect(msg).toContain('💼 *Empresa:* N/A')
-        expect(msg).toContain('👔 *Cargo:* N/A')
-        expect(msg).toContain('🏭 *Industria:* N/A')
+        expect(msg).toContain('🏢 *Empresa:* Francisca Paris')
+        expect(msg).toContain('👤 *Representante:* Francisca Paris')
+        expect(msg).not.toContain('👔 *Cargo:*')
     })
 
     it('no contiene N/A cuando todos los campos están completos', () => {
         const msg = buildProfileMessageText({
             name: 'Ana Torres',
-            phone: '+56912345678',
-            email: 'ana@empresa.cl',
-            profile: 'Tecnología',
             company: 'Acme',
             position: 'CTO',
             industry: 'Software',
         })
         expect(msg).not.toContain('N/A')
-        expect(msg).toContain('💼 *Empresa:* Acme')
+        expect(msg).toContain('🏢 *Empresa:* Acme')
+        expect(msg).toContain('👤 *Representante:* Ana Torres')
         expect(msg).toContain('👔 *Cargo:* CTO')
     })
 
-    it('siempre incluye el texto de clasificación al final', () => {
+    it('siempre incluye el texto de interés al final', () => {
         const msg = buildProfileMessageText({ name: 'Solo Nombre' })
-        expect(msg).toContain('¿Cómo clasificarías esta conexión?')
+        expect(msg).toContain('¿Cuál es tu nivel de interés en esta empresa?')
     })
 
-    it('maneja company y position nulos con N/A', () => {
+    it('con company y position nulos usa el nombre como empresa sin mostrar cargo', () => {
         const msg = buildProfileMessageText({ name: 'Juan Pérez', company: null, position: null })
-        expect(msg).toContain('💼 *Empresa:* N/A')
-        expect(msg).toContain('👔 *Cargo:* N/A')
+        expect(msg).toContain('🏢 *Empresa:* Juan Pérez')
+        expect(msg).not.toContain('👔 *Cargo:*')
     })
 })
 

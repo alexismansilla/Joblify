@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutGrid, UserPlus, ShieldCheck, Activity } from 'lucide-react'
+import { Home, LayoutGrid, UserPlus, ShieldCheck, Activity, Building2 } from 'lucide-react'
 
 const NAV_LINKS = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/admin', label: 'Admin', icon: LayoutGrid },
+    { href: '/', label: 'Check-in', icon: Home },
+    { href: '/admin', label: 'Candidatos', icon: LayoutGrid },
     { href: '/admin/registro-manual', label: 'Registro', icon: UserPlus },
     { href: '/admin/autoridades', label: 'Autoridades', icon: ShieldCheck },
     { href: '/matches', label: 'Métricas', icon: Activity },
@@ -22,7 +22,7 @@ export default function AdminNavbar() {
                 {/* Brand / Logo */}
                 <div className="flex items-center gap-4 shrink-0">
                     <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none flex flex-col">
-                        Connectify<span className="text-[10px] font-mono tracking-widest opacity-50">ADMIN DASHBOARD</span>
+                        Feria de Empleo<span className="text-[10px] font-mono tracking-widest opacity-50">PANEL ORGANIZADOR</span>
                     </h1>
                 </div>
 

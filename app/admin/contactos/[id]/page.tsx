@@ -2,10 +2,10 @@
 
 import { useState, useEffect, use } from 'react'
 import { motion, Variants } from 'framer-motion'
-import { ArrowLeft, Check, Hash, Home, User, Printer, Loader2 } from 'lucide-react'
+import { ArrowLeft, Check, Hash, Home, User, Printer, Loader2, Building2, Copy, CheckCheck } from 'lucide-react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
-import { getContactById } from '@/app/actions/contacts'
+import { getContactById, generateCompanyToken } from '@/app/actions/contacts'
 import { Contact } from '@/lib/services/contactService'
 import { printToQZ } from '@/lib/qz'
 import { generateCredentialImage } from '@/lib/credentialRenderer'
@@ -33,6 +33,9 @@ export default function ContactCredentialPage({ params }: Props) {
     const [loading, setLoading] = useState(true)
     const [printing, setPrinting] = useState(false)
     const [notFound, setNotFound] = useState(false)
+    const [companyLink, setCompanyLink] = useState<string | null>(null)
+    const [generatingLink, setGeneratingLink] = useState(false)
+    const [linkCopied, setLinkCopied] = useState(false)
 
     useEffect(() => {
         const init = async () => {
@@ -85,6 +88,25 @@ export default function ContactCredentialPage({ params }: Props) {
 
         return () => { isMounted = false }
     }, [includeQR, contact, qrDataUrl])
+
+    const handleGenerateCompanyLink = async () => {
+        if (!contact) return
+        setGeneratingLink(true)
+        try {
+            const token = await generateCompanyToken(contact.id)
+            const baseUrl = window.location.origin
+            setCompanyLink(`${baseUrl}/empresa/${token}`)
+        } finally {
+            setGeneratingLink(false)
+        }
+    }
+
+    const handleCopyLink = async () => {
+        if (!companyLink) return
+        await navigator.clipboard.writeText(companyLink)
+        setLinkCopied(true)
+        setTimeout(() => setLinkCopied(false), 2000)
+    }
 
     const handlePrintCredential = async () => {
         if (!credentialImageUrl) return
@@ -181,7 +203,46 @@ export default function ContactCredentialPage({ params }: Props) {
                         </div>
                     </motion.div>
 
-                    <motion.div variants={fadeUp} className="flex items-stretch gap-3 max-w-xl mt-8 md:mt-0">
+                    {/* Portal de Empresa */}
+                    <motion.div variants={fadeUp} className="max-w-xl border border-black/10 dark:border-white/10 p-5 space-y-3 mt-8 md:mt-0">
+                        <p className="font-mono text-[10px] tracking-widest uppercase opacity-50 flex items-center gap-2">
+                            <Building2 className="w-3 h-3" /> PORTAL DE EMPRESA
+                        </p>
+                        <p className="font-mono text-xs opacity-60">
+                            Genera el link único para que esta empresa acceda a su lista de leads capturados.
+                        </p>
+                        {companyLink ? (
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 p-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                                    <span className="font-mono text-[10px] truncate flex-1 opacity-70">{companyLink}</span>
+                                    <button
+                                        onClick={handleCopyLink}
+                                        className="shrink-0 p-1 hover:opacity-50 transition-opacity"
+                                        title="Copiar link"
+                                    >
+                                        {linkCopied
+                                            ? <CheckCheck className="w-4 h-4 text-emerald-500" />
+                                            : <Copy className="w-4 h-4" />
+                                        }
+                                    </button>
+                                </div>
+                                <p className="font-mono text-[9px] uppercase tracking-widest opacity-40">
+                                    {linkCopied ? '✓ COPIADO AL PORTAPAPELES' : 'Comparte este link con la empresa'}
+                                </p>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleGenerateCompanyLink}
+                                disabled={generatingLink}
+                                className="inline-flex items-center gap-3 px-5 py-3 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all font-mono text-xs tracking-widest uppercase disabled:opacity-40"
+                            >
+                                {generatingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+                                {generatingLink ? 'GENERANDO...' : 'GENERAR LINK EMPRESA'}
+                            </button>
+                        )}
+                    </motion.div>
+
+                    <motion.div variants={fadeUp} className="flex items-stretch gap-3 max-w-xl">
                         <button
                             onClick={handlePrintCredential}
                             disabled={printing}

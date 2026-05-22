@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useActionState } from 'react'
+import { useState, useRef } from 'react'
 import { createContact } from '@/app/actions/contacts'
-import { ArrowLeft, UserPlus, Check, AlertCircle, Loader2, User, Hash, Mail, Phone, Building2, Briefcase, ExternalLink } from 'lucide-react'
+import { ArrowLeft, UserPlus, Check, AlertCircle, Loader2, User, Hash, Mail, Phone, Building2, Briefcase, ExternalLink, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { Input } from '@/app/components/ui/Input'
@@ -18,6 +18,7 @@ interface FieldConfig {
     required: boolean
     type: string
     options?: string[]
+    colSpan?: boolean
 }
 
 const FIELDS: FieldConfig[] = [
@@ -58,57 +59,102 @@ const FIELDS: FieldConfig[] = [
         type: 'tel',
     },
     {
+        id: 'email',
+        name: 'email',
+        label: '05 // E-MAIL',
+        placeholder: 'Ej: alan.turing@empresa.com',
+        icon: <Mail className="w-4 h-4" />,
+        required: false,
+        type: 'email',
+    },
+    {
+        id: 'profile',
+        name: 'profile',
+        label: '06 // ÁREA PROFESIONAL',
+        placeholder: 'Selecciona área',
+        icon: <Briefcase className="w-4 h-4" />,
+        required: false,
+        type: 'select',
+        options: [
+            'Tecnología',
+            'Finanzas',
+            'Marketing',
+            'Operaciones',
+            'Salud',
+            'Legal',
+            'Otro',
+        ]
+    },
+    {
+        id: 'experience_level',
+        name: 'experience_level',
+        label: '07 // NIVEL DE EXPERIENCIA',
+        placeholder: 'Selecciona nivel',
+        icon: <User className="w-4 h-4" />,
+        required: false,
+        type: 'select',
+        options: [
+            'Sin experiencia',
+            'Junior',
+            'Semi-senior',
+            'Senior',
+        ]
+    },
+    {
+        id: 'job_search_type',
+        name: 'job_search_type',
+        label: '08 // TIPO DE BÚSQUEDA',
+        placeholder: 'Selecciona tipo',
+        icon: <Briefcase className="w-4 h-4" />,
+        required: false,
+        type: 'select',
+        options: [
+            'Trabajo full-time',
+            'Trabajo part-time',
+            'Práctica',
+            'Freelance',
+            'Solo información',
+        ]
+    },
+    {
         id: 'company',
         name: 'company',
-        label: '05 // EMPRESA U ORGANIZACIÓN',
-        placeholder: 'Ej: Acme Corp',
+        label: '09 // EMPRESA U ORGANIZACIÓN ACTUAL',
+        placeholder: 'Ej: Empresa donde trabaja actualmente',
         icon: <Building2 className="w-4 h-4" />,
-        required: true,
+        required: false,
         type: 'text',
     },
     {
         id: 'position',
         name: 'position',
-        label: '06 // CARGO',
-        placeholder: 'Ej: Gerente de Innovación',
+        label: '10 // CARGO ACTUAL',
+        placeholder: 'Ej: Analista de Sistemas',
         icon: <Briefcase className="w-4 h-4" />,
         required: false,
         type: 'text',
-    },
-    {
-        id: 'profile',
-        name: 'profile',
-        label: '07 // PERFIL PROFESIONAL',
-        placeholder: 'Selecciona Opción',
-        icon: <User className="w-4 h-4" />,
-        required: false,
-        type: 'select',
-        options: [
-            'Startup o emprendedor',
-            'Gremio - Gran empresa - Corporativo',
-            'Sector Publico',
-            'Academia',
-            'Ecosistema',
-            'Publico general'
-        ]
     },
     {
         id: 'industry',
         name: 'industry',
-        label: '08 // INDUSTRIA PRINCIPAL',
-        placeholder: 'Ej: Tecnología',
+        label: '11 // INDUSTRIA / SUBSECTOR',
+        placeholder: 'Ej: Fintech, Retail, Salud digital...',
         icon: <Briefcase className="w-4 h-4" />,
         required: false,
         type: 'text',
     },
+]
+
+const EMPRESA_FIELDS: FieldConfig[] = [
     {
-        id: 'email',
-        name: 'email',
-        label: '09 // E-MAIL',
-        placeholder: 'Ej: alan.turing@empresa.com',
-        icon: <Mail className="w-4 h-4" />,
+        id: 'opportunity_description',
+        name: 'opportunity_description',
+        label: '// DESCRIPCIÓN DE OPORTUNIDADES (solo para empresa)',
+        placeholder: 'Ej: Buscamos ingenieros full-stack y diseñadores UX para posiciones permanentes en Santiago.',
+        icon: <FileText className="w-4 h-4" />,
         required: false,
-        type: 'email',
+        type: 'textarea',
+        colSpan: true,
     },
 ]
 
@@ -126,13 +172,11 @@ export default function RegistroManualPage() {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
 
-        // Early return: validar campos requeridos
         const firstName = (formData.get('first_name') as string)?.trim()
         const lastName = (formData.get('last_name') as string)?.trim()
-        const company = (formData.get('company') as string)?.trim()
 
-        if (!firstName || !lastName || !company) {
-            setResult({ success: false, message: 'Nombres, Apellidos y Empresa son campos obligatorios.' })
+        if (!firstName || !lastName) {
+            setResult({ success: false, message: 'Nombres y Apellidos son campos obligatorios.' })
             return
         }
 
@@ -152,13 +196,10 @@ export default function RegistroManualPage() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-[#050505] text-black dark:text-white font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black relative">
-            {/* Grilla de fondo */}
             <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] mix-blend-difference bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:4rem_4rem] -z-10" />
 
-            {/* Navbar */}
             <AdminNavbar />
 
-            {/* Contenido */}
             <main className="max-w-[1400px] mx-auto px-8 pt-32 pb-24">
                 <motion.div
                     initial="initial"
@@ -169,13 +210,13 @@ export default function RegistroManualPage() {
                     {/* Header */}
                     <motion.div variants={fadeUp} className="space-y-2">
                         <p className="font-mono text-[10px] tracking-widest uppercase opacity-40">
-                            Connectify · Registro Manual
+                            Feria de Empleo · Registro Manual
                         </p>
                         <h2 className="text-5xl md:text-6xl font-black tracking-tighter uppercase leading-none">
-                            Nuevo<br /><span className="opacity-30">Asistente.</span>
+                            Nuevo<br /><span className="opacity-30">Candidato.</span>
                         </h2>
                         <p className="font-mono text-xs tracking-widest uppercase opacity-50 pt-2">
-                            Nombre, Apellidos y Emresa son obligatorios. El QR se genera automáticamente.
+                            Nombres y Apellidos son obligatorios. El QR se genera automáticamente.
                         </p>
                     </motion.div>
 
@@ -187,49 +228,82 @@ export default function RegistroManualPage() {
                         className="flex flex-col gap-10"
                         noValidate
                     >
-                        {/* Campos (Layout en 2 columnas p/ optimizar espacio) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                            {FIELDS.map((field) => (
-                                <div key={field.id} className="space-y-2">
-                                    <label
-                                        htmlFor={field.id}
-                                        className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest uppercase opacity-80"
-                                    >
-                                        {field.icon}
-                                        {field.label}
-                                        {field.required && (
-                                            <span className="text-black dark:text-white opacity-100">*</span>
-                                        )}
-                                    </label>
-                                    {field.type === 'select' ? (
-                                        <select
-                                            id={field.id}
-                                            name={field.name}
-                                            required={field.required}
-                                            disabled={loading}
-                                            className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 px-4 font-mono text-sm tracking-widest transition-colors rounded-none disabled:opacity-40 cursor-pointer"
-                                            defaultValue=""
+                        {/* Sección: datos del candidato */}
+                        <div>
+                            <p className="font-mono text-[10px] tracking-widest uppercase opacity-40 mb-4 border-b border-black/10 dark:border-white/10 pb-2">
+                                — DATOS DEL CANDIDATO
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                {FIELDS.map((field) => (
+                                    <div key={field.id} className={`space-y-2 ${field.colSpan ? 'md:col-span-2' : ''}`}>
+                                        <label
+                                            htmlFor={field.id}
+                                            className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest uppercase opacity-80"
                                         >
-                                            <option value="" disabled className="text-black/50 dark:text-white/50">{field.placeholder}</option>
-                                            {field.options?.map((opt, i) => (
-                                                <option key={i} value={opt} className="text-black bg-white dark:bg-[#050505] dark:text-white">
-                                                    {opt}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    ) : (
-                                        <Input
+                                            {field.icon}
+                                            {field.label}
+                                            {field.required && (
+                                                <span className="text-black dark:text-white opacity-100">*</span>
+                                            )}
+                                        </label>
+                                        {field.type === 'select' ? (
+                                            <select
+                                                id={field.id}
+                                                name={field.name}
+                                                required={field.required}
+                                                disabled={loading}
+                                                className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 px-4 font-mono text-sm tracking-widest transition-colors rounded-none disabled:opacity-40 cursor-pointer"
+                                                defaultValue=""
+                                            >
+                                                <option value="" disabled className="text-black/50 dark:text-white/50">{field.placeholder}</option>
+                                                {field.options?.map((opt, i) => (
+                                                    <option key={i} value={opt} className="text-black bg-white dark:bg-[#050505] dark:text-white">
+                                                        {opt}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <Input
+                                                id={field.id}
+                                                name={field.name}
+                                                type={field.type}
+                                                placeholder={field.placeholder}
+                                                required={field.required}
+                                                disabled={loading}
+                                                autoComplete="off"
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Sección: campos para empresa participante */}
+                        <div>
+                            <p className="font-mono text-[10px] tracking-widest uppercase opacity-40 mb-4 border-b border-black/10 dark:border-white/10 pb-2">
+                                — SOLO SI ES UNA EMPRESA PARTICIPANTE (opcional)
+                            </p>
+                            <div className="grid grid-cols-1 gap-x-8 gap-y-6">
+                                {EMPRESA_FIELDS.map((field) => (
+                                    <div key={field.id} className="space-y-2">
+                                        <label
+                                            htmlFor={field.id}
+                                            className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest uppercase opacity-80"
+                                        >
+                                            {field.icon}
+                                            {field.label}
+                                        </label>
+                                        <textarea
                                             id={field.id}
                                             name={field.name}
-                                            type={field.type}
                                             placeholder={field.placeholder}
-                                            required={field.required}
                                             disabled={loading}
-                                            autoComplete="off"
+                                            rows={3}
+                                            className="w-full bg-transparent border border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white outline-none py-4 px-4 font-mono text-sm tracking-wide transition-colors rounded-none disabled:opacity-40 resize-none"
                                         />
-                                    )}
-                                </div>
-                            ))}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Feedback */}
@@ -249,7 +323,7 @@ export default function RegistroManualPage() {
                                         <>
                                             <Check className="w-5 h-5 shrink-0" />
                                             <span className="font-mono text-xs uppercase tracking-widest flex-1">
-                                                ASISTENTE REGISTRADO EXITOSAMENTE. El formulario fue limpiado para un nuevo registro.
+                                                CANDIDATO REGISTRADO EXITOSAMENTE. El formulario fue limpiado para un nuevo registro.
                                             </span>
                                             {result.contactId && (
                                                 <Link
@@ -281,7 +355,7 @@ export default function RegistroManualPage() {
                                 className="group inline-flex items-center justify-between gap-8 px-8 py-5 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 w-full sm:w-auto"
                             >
                                 <span className="font-mono text-sm tracking-widest uppercase font-bold">
-                                    {loading ? 'GUARDANDO...' : 'REGISTRAR ASISTENTE'}
+                                    {loading ? 'GUARDANDO...' : 'REGISTRAR CANDIDATO'}
                                 </span>
                                 {loading ? (
                                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -294,7 +368,7 @@ export default function RegistroManualPage() {
                                 href="/admin"
                                 className="inline-flex items-center gap-3 px-8 py-5 border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200 font-mono text-sm tracking-widest uppercase"
                             >
-                                Ver Todos los Asistentes
+                                Ver Todos los Candidatos
                             </Link>
                         </div>
                     </motion.form>

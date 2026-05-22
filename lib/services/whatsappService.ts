@@ -41,21 +41,21 @@ export const whatsappService = {
                             type: "reply",
                             reply: {
                                 id: `negocio_${matchId}`,
-                                title: "💼 Negocio"
+                                title: "⭐ Muy interesado"
                             }
                         },
                         {
                             type: "reply",
                             reply: {
                                 id: `mentoria_${matchId}`,
-                                title: "🤝 Mentoría"
+                                title: "📋 Quiero más info"
                             }
                         },
                         {
                             type: "reply",
                             reply: {
                                 id: `casual_${matchId}`,
-                                title: "💬 Casual"
+                                title: "👀 Solo explorando"
                             }
                         }
                     ]

@@ -166,30 +166,6 @@ export async function findContactByIdentifier(identifier: string) {
 }
 
 /**
- * Finds a contact by its email.
- */
-export async function findContactByEmail(email: string) {
-    try {
-        return await contactService.getByEmail(email)
-    } catch (error) {
-        console.error('Error finding contact by email:', error)
-        return null
-    }
-}
-
-/**
- * Generates a full report of matches for the dashboard.
- */
-export async function getMatchesReport() {
-    try {
-        return await contactService.getMatchesReport()
-    } catch (error) {
-        console.error('Error getting matches report:', error)
-        return []
-    }
-}
-
-/**
  * Returns pre-aggregated stats + top 20 for the matches dashboard.
  * Single DB call via RPC — no full table load.
  */
@@ -200,6 +176,44 @@ export async function getMatchesDashboard() {
         console.error('Error getting matches dashboard:', error)
         return null
     }
+}
+
+/**
+ * Returns a company contact by its access_token (for empresa portal).
+ */
+export async function getCompanyByToken(token: string) {
+    try {
+        return await contactService.getByAccessToken(token)
+    } catch (error) {
+        console.error('Error fetching company by token:', error)
+        return null
+    }
+}
+
+/**
+ * Returns all leads (candidates who scanned the company QR).
+ */
+export async function getLeadsForCompany(companyId: string) {
+    try {
+        return await contactService.getLeadsForCompany(companyId)
+    } catch (error) {
+        console.error('Error fetching leads:', error)
+        return []
+    }
+}
+
+/**
+ * Generates (or reuses) an access_token for the empresa portal link.
+ */
+export async function generateCompanyToken(contactId: string): Promise<string> {
+    return contactService.generateAccessToken(contactId)
+}
+
+/**
+ * Updates the plan of a company contact.
+ */
+export async function updateContactPlan(contactId: string, plan: string): Promise<void> {
+    return contactService.updatePlan(contactId, plan)
 }
 
 /**
@@ -219,6 +233,9 @@ export async function createContact(formData: FormData) {
     const position = (formData.get('position') as string)?.trim() || null
     const profile = (formData.get('profile') as string)?.trim() || null
     const industry = (formData.get('industry') as string)?.trim() || null
+    const experience_level = (formData.get('experience_level') as string)?.trim() || null
+    const job_search_type = (formData.get('job_search_type') as string)?.trim() || null
+    const opportunity_description = (formData.get('opportunity_description') as string)?.trim() || null
 
     if (!firstName) throw new Error('El nombre es obligatorio')
 
@@ -234,6 +251,9 @@ export async function createContact(formData: FormData) {
             position,
             profile,
             industry,
+            experience_level,
+            job_search_type,
+            opportunity_description,
         }])
         revalidatePath('/admin')
         // Retornamos el id para que el cliente pueda navegar directo a la credencial

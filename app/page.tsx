@@ -142,14 +142,14 @@ export default function CheckIn() {
                         {/* Left column context */}
                         <div className="hidden md:flex flex-1 flex-col justify-between p-12 lg:p-16 border-r border-black/10 dark:border-white/10 relative">
                             <motion.div variants={fadeUp} className="text-sm font-mono tracking-widest uppercase">
-                                Connectify
+                                Joblify
                             </motion.div>
 
                             <motion.div variants={fadeUp} className="space-y-4">
                                 <h1 className="text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9]">
-                                    CHECK<br />IN.
+                                    FERIA<br />DE<br />EMPLEO.
                                 </h1>
-                                <p className="font-mono text-xs tracking-widest uppercase opacity-50">Portal de Acreditación</p>
+                                <p className="font-mono text-xs tracking-widest uppercase opacity-50">Portal de Acreditación · Candidatos</p>
                             </motion.div>
                         </div>
 
@@ -161,7 +161,7 @@ export default function CheckIn() {
                                     <form onSubmit={handleSearch} className="space-y-16">
                                         <div className="space-y-6">
                                             <label htmlFor="rut" className="block text-xs font-mono tracking-widest uppercase opacity-60">
-                                                01 // Ingresar RUT del asistente
+                                                01 // Ingresar RUT del candidato
                                             </label>
                                             <div className="relative group">
                                                 <Input
@@ -234,7 +234,7 @@ export default function CheckIn() {
                                     >
                                         <Users className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
                                         <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
-                                            VER TODOS LOS ASISTENTES
+                                            VER TODOS LOS CANDIDATOS
                                         </span>
                                     </Link>
                                 </div>

@@ -16,7 +16,7 @@ async function testConnection() {
     
     try {
         console.log("enviando mensaje de perfil...")
-        const mockContact = { name: "Alexis (Prueba)", company: "Connectify" }
+        const mockContact = { name: "Alexis (Prueba)", company: "Joblify" }
         await whatsappService.sendInteractiveProfileMessage(telefonoPrueba, mockContact, "match_ab12c")
         
         await new Promise(r => setTimeout(r, 2000))
