@@ -1,6 +1,8 @@
 import { NextResponse, after } from 'next/server'
-import { contactService } from '@/lib/services/contactService'
+import { empresaService } from '@/lib/services/empresaService'
+import { candidatoService } from '@/lib/services/candidatoService'
 import { whatsappService } from '@/lib/services/whatsappService'
+import type { Empresa } from '@/lib/services/empresaService'
 
 // GET handler for Webhook verification (Required by Meta)
 export async function GET(request: Request) {
@@ -30,33 +32,29 @@ export async function POST(request: Request) {
     try {
         const body = await request.json()
 
-        // Validamos que sea un evento de mensaje de una cuenta de WhatsApp Business
         if (body.object === 'whatsapp_business_account') {
             const entry = body.entry?.[0]
             const change = entry?.changes?.[0]
             const value = change?.value
 
-            // Si hay un mensaje entrante
             if (value?.messages && value.messages.length > 0) {
                 const message = value.messages[0]
-                const scannerPhone = message.from // Número que escaneó el QR
+                const candidatoPhone = message.from
 
-                // Usamos 'after' para responder 200 OK inmediatamente a Meta 
-                // y procesar la lógica pesada en background. Esto evita Timeouts en Vercel.
                 after(async () => {
                     try {
-                        // Si el mensaje es interactivo (respuesta a un botón)
-                        if (message.type === 'interactive') {
-                            const buttonReply = message.interactive?.button_reply
-                            if (buttonReply) {
-                                await processButtonReply(scannerPhone, buttonReply.id)
-                            }
-                        }
-                        // Si es un mensaje de texto normal (el mensaje que genera el QR)
-                        else if (message.type === 'text') {
+                        // Only process text messages with @TOKEN
+                        if (message.type === 'text') {
                             const messageText = message.text?.body
                             console.log('Mensaje recibido:', messageText)
-                            await processConnection(scannerPhone, messageText)
+                            await processConnection(candidatoPhone, messageText)
+                        }
+                        // Button replies from old messages still work
+                        else if (message.type === 'interactive') {
+                            const buttonReply = message.interactive?.button_reply
+                            if (buttonReply) {
+                                await processButtonReply(candidatoPhone, buttonReply.id)
+                            }
                         }
                     } catch (bgError) {
                         console.error('Error in background processing:', bgError)
@@ -64,7 +62,6 @@ export async function POST(request: Request) {
                 })
             }
 
-            // Respuesta inmediata: Meta deja de esperar y no reintenta el webhook
             return new NextResponse('OK', { status: 200 })
         }
 
@@ -75,54 +72,82 @@ export async function POST(request: Request) {
     }
 }
 
-async function processConnection(scannerPhone: string, text: string) {
+/**
+ * Process a @TOKEN text message from WhatsApp.
+ *
+ * Flow:
+ * 1. Extract @TOKEN from message text
+ * 2. Find Empresa by qr_token
+ * 3. Find existing match from scan form (connect page), or create one
+ * 4. Update match with confirmed phone number
+ * 5. Send confirmation + empresa contact card
+ */
+async function processConnection(candidatoPhone: string, text: string) {
     const match = text.match(/@([A-Z0-9]{8,10})/)
     if (!match) return
 
     const qrToken = match[1]
-    console.log(`Buscando contacto con qr_token: ${qrToken}`)
+    console.log(`Buscando empresa con qr_token: ${qrToken}`)
 
-    // 1+2. Buscamos target y scanner en paralelo — son queries independientes
-    const [targetContact, scannerContact] = await Promise.all([
-        contactService.getByQrToken(qrToken),
-        contactService.getByIdentifier(scannerPhone),
+    const [empresa, candidato] = await Promise.all([
+        empresaService.getByQrToken(qrToken),
+        candidatoService.getByIdentifier(candidatoPhone),
     ])
 
-    if (!targetContact) {
-        console.error('Contacto destino no encontrado para qr_token:', qrToken)
+    if (!empresa) {
+        console.error('Empresa no encontrada para qr_token:', qrToken)
         return
     }
 
-    // MODO PRUEBA / AUTO-ESCANEO
-    if (scannerContact && scannerContact.id === targetContact.id) {
-        console.log(`[Webhook] MODO DE PRUEBA: Auto-escaneo activado para ${scannerContact.name}`)
-        await Promise.all([
-            whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, 'self-test'),
-            whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone || ''),
-        ])
-        return
+    // Try to find existing match from the scan form (connect page)
+    // The connect page creates a match with empty/null candidato_phone
+    const existingMatch = await empresaService.findUnmatchedByEmpresa(empresa.id)
+
+    let matchId: string
+
+    if (existingMatch) {
+        // Update the existing match with the confirmed phone
+        const updated = await empresaService.updateMatchPhone(existingMatch.id, candidatoPhone)
+        matchId = existingMatch.id
+        console.log(`Match existente actualizado con teléfono: ${matchId}`)
+    } else {
+        // No existing match — create one (direct WhatsApp flow without connect page)
+        const matchRecord = await empresaService.registerMatch(
+            empresa.id,
+            candidatoPhone,
+            candidato?.id || undefined,
+        )
+        if (!matchRecord || matchRecord.length === 0) {
+            console.error('No se pudo crear el registro del match')
+            return
+        }
+        matchId = matchRecord[0].id
+        console.log(`Nuevo match creado desde WhatsApp: ${matchId}`)
     }
 
-    // 3. Registramos el match (depende de ambos resultados anteriores)
-    const matchRecord = await contactService.registerWhatsappMatch(targetContact.id, scannerContact?.id || null, scannerPhone)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://joblify.vercel.app'
+    const profileUrl = `${baseUrl}/completar-perfil/${matchId}`
 
-    if (!matchRecord) {
-        console.error('No se pudo crear el registro del match')
-        return
+    // Send confirmation + empresa contact card + profile completion link
+    const tasks: Promise<void>[] = [
+        whatsappService.sendTextMessage(
+            candidatoPhone,
+            `✅ ¡Conexión confirmada con ${empresa.company || empresa.name}! Te hemos enviado sus datos de contacto.\n\n📝 Completa tu perfil aquí para que te conozcan mejor:\n${profileUrl}`
+        ),
+    ]
+    if (empresa.phone) {
+        tasks.push(whatsappService.sendContactCard(candidatoPhone, empresa.name, empresa.phone))
     }
-
-    // 4+5. Enviamos ambos mensajes en paralelo — son HTTP calls independientes
-    await Promise.all([
-        whatsappService.sendInteractiveProfileMessage(scannerPhone, targetContact, matchRecord[0].id),
-        whatsappService.sendContactCard(scannerPhone, targetContact.name, targetContact.phone),
-    ])
+    await Promise.all(tasks)
 }
 
-
-async function processButtonReply(scannerPhone: string, buttonId: string) {
+/**
+ * Process a button reply (interest classification).
+ * Kept for backward compatibility with older messages.
+ */
+async function processButtonReply(candidatoPhone: string, buttonId: string) {
     console.log(`[DEBUG] Recibido click en botón. Button ID: ${buttonId}`)
 
-    // Format de buttonId: type_matchId (e.g., negocio_1234-5678)
     const [action, matchId] = buttonId.split('_')
 
     if (!matchId) {
@@ -130,17 +155,7 @@ async function processButtonReply(scannerPhone: string, buttonId: string) {
         return
     }
 
-    // Respuesta interceptada y simulada para cuando jugaron con su propia credencial
-    if (matchId === 'self-test') {
-        console.log(`[DEBUG] Click de prueba detectado (${action})`)
-        await whatsappService.sendTextMessage(scannerPhone, '😁 Efectivamente, interactuaste con tu propio perfil en modo de prueba.\n\nTe invito a escanear los códigos QR de otras personas y hacer conexiones reales. ¡Éxito!')
-        return
-    }
-
-    console.log(`[DEBUG] Clasificando Match ID: ${matchId} como: ${action}`)
-
-    // 1. Guardamos el tipo de conexión y obtenemos el match actualizado
-    const matchResult = await contactService.updateMatchConnectionType(matchId, action)
+    const matchResult = await empresaService.updateMatchConnectionType(matchId, action)
     console.log(`[DEBUG] Match actualizado:`, matchResult)
 
     if (!matchResult?.[0]) {
@@ -148,7 +163,8 @@ async function processButtonReply(scannerPhone: string, buttonId: string) {
         return
     }
 
-    // Confirmación final
-    await whatsappService.sendTextMessage(scannerPhone, '¡Gracias! Tu conexión ha sido clasificada exitosamente. ✅')
+    await whatsappService.sendTextMessage(
+        candidatoPhone,
+        '¡Gracias! Tu conexión ha sido clasificada exitosamente. ✅'
+    )
 }
-

@@ -2,13 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, Variants } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Printer, Check, User, Users, Hash, Loader2, UserPlus, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Printer, Check, User, Users, Hash, Loader2, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { Input } from '@/app/components/ui/Input'
 
-import { findContactByIdentifier } from '@/app/actions/contacts'
-import { Contact } from '@/lib/services/contactService'
+import { findCandidatoByIdentifier } from '@/app/actions/candidatos'
+import type { Candidato } from '@/lib/services/candidatoService'
 import { printToQZ } from '@/lib/qz'
 import { generateCredentialImage } from '@/lib/credentialRenderer'
 
@@ -29,7 +29,7 @@ export default function CheckIn() {
     const [identifier, setIdentifier] = useState('')
     const [loading, setLoading] = useState(false)
     const [printing, setPrinting] = useState(false)
-    const [contact, setContact] = useState<Contact | null>(null)
+    const [contact, setContact] = useState<Candidato | null>(null)
     const [qrDataUrl, setQrDataUrl] = useState('')
     const [includeQR, setIncludeQR] = useState(true)
     const [credentialImageUrl, setCredentialImageUrl] = useState('')
@@ -51,7 +51,7 @@ export default function CheckIn() {
             try {
                 const credentialImg = await generateCredentialImage({
                     name: contact!.name,
-                    company: (contact as any).company || ' ',
+                    company: contact!.profile || contact!.industry || ' ',
                     qrBase64: qrDataUrl,
                     includeQR
                 })
@@ -73,7 +73,7 @@ export default function CheckIn() {
         setError(null)
 
         try {
-            const result = await findContactByIdentifier(identifier.trim())
+            const result = await findCandidatoByIdentifier(identifier.trim())
             if (result) {
                 setContact(result)
 
@@ -218,15 +218,7 @@ export default function CheckIn() {
                                             </span>
                                             <UserPlus className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
                                         </Link>
-                                        <Link
-                                            href="/admin/autoridades"
-                                            className="group inline-flex items-center justify-between gap-3 px-4 py-3 h-[60px] border border-black/20 dark:border-white/20 hover:border-black dark:hover:border-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
-                                        >
-                                            <span className="font-mono text-[11px] tracking-widest uppercase opacity-70 group-hover:opacity-100 transition-opacity leading-tight">
-                                                Lista<br />Autoridades
-                                            </span>
-                                            <ShieldCheck className="w-4 h-4 opacity-40 group-hover:opacity-100 flex-shrink-0 transition-opacity" />
-                                        </Link>
+
                                     </div>
                                     <Link
                                         href="/admin"

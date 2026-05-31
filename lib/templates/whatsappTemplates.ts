@@ -1,8 +1,5 @@
-export interface ContactTemplateData {
+export interface EmpresaTemplateData {
     name: string;
-    phone?: string | null;
-    email?: string | null;
-    profile?: string | null;
     company?: string | null;
     position?: string | null;
     industry?: string | null;
@@ -11,23 +8,23 @@ export interface ContactTemplateData {
 
 /**
  * Genera el texto del mensaje interactivo de perfil para WhatsApp.
- * En contexto de feria de empleo, el "contacto" es la empresa/reclutador
+ * En contexto de feria de empleo, la "empresa" es la entidad cuyo QR fue escaneado
  * y quien recibe el mensaje es el candidato que escaneó el QR.
  */
-export function buildProfileMessageText(contact: ContactTemplateData): string {
+export function buildProfileMessageText(empresa: EmpresaTemplateData): string {
     const lines: string[] = [
-        `🏢 *Empresa:* ${contact.company || contact.name || 'N/A'}`,
-        `👤 *Representante:* ${contact.name || 'N/A'}`,
+        `🏢 *Empresa:* ${empresa.company || empresa.name || 'N/A'}`,
+        `👤 *Representante:* ${empresa.name || 'N/A'}`,
     ]
 
-    if (contact.position) {
-        lines.push(`👔 *Cargo:* ${contact.position}`)
+    if (empresa.position) {
+        lines.push(`👔 *Cargo:* ${empresa.position}`)
     }
 
-    if (contact.opportunity_description) {
-        lines.push(`🎯 *Oportunidades:* ${contact.opportunity_description}`)
-    } else if (contact.industry) {
-        lines.push(`🏭 *Sector:* ${contact.industry}`)
+    if (empresa.opportunity_description) {
+        lines.push(`🎯 *Oportunidades:* ${empresa.opportunity_description}`)
+    } else if (empresa.industry) {
+        lines.push(`🏭 *Sector:* ${empresa.industry}`)
     }
 
     lines.push('')

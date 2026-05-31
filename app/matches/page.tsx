@@ -1,4 +1,4 @@
-import { getMatchesDashboard } from '@/app/actions/contacts'
+import { getMatchesDashboard } from '@/app/actions/empresas'
 import { Zap, Users, Target } from 'lucide-react'
 import AdminNavbar from '@/app/components/AdminNavbar'
 
@@ -8,8 +8,9 @@ export default async function MatchesDashboard() {
     const dashboard = await getMatchesDashboard()
 
     const stats = dashboard?.stats ?? {
-        total_contacts: 0,
-        active_contacts: 0,
+        total_candidatos: 0,
+        total_empresas: 0,
+        active_matches: 0,
         total_matches: 0,
         negocio: 0,
         mentoria: 0,
@@ -17,10 +18,10 @@ export default async function MatchesDashboard() {
         no_registrado: 0,
     }
 
-    const topContacts = dashboard?.top_contacts ?? []
+    const topEmpresas = dashboard?.top_empresas ?? []
 
-    const adoptionRate = stats.total_contacts > 0
-        ? Math.round((stats.active_contacts / stats.total_contacts) * 100)
+    const adoptionRate = stats.total_candidatos > 0
+        ? Math.round((stats.active_matches / stats.total_candidatos) * 100)
         : 0
 
     const connectionTypesCount = {
@@ -72,7 +73,7 @@ export default async function MatchesDashboard() {
                                 </span>
                             </div>
                             <span className="font-mono text-[10px] tracking-widest uppercase opacity-40 mt-2">
-                                {stats.active_contacts} de {stats.total_contacts} candidatos con al menos 1 registro de interés
+                                {stats.active_matches} de {stats.total_candidatos} candidatos con al menos 1 registro de interés
                             </span>
                         </div>
                     </div>
@@ -111,7 +112,7 @@ export default async function MatchesDashboard() {
                         TOP 20 EMPRESAS CON MÁS LEADS CAPTURADOS
                     </h3>
 
-                    {topContacts.length === 0 ? (
+                    {topEmpresas.length === 0 ? (
                         <div className="w-full p-12 border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 flex flex-col items-center justify-center min-h-[300px]">
                             <Users className="w-12 h-12 opacity-20 mb-4" strokeWidth={1} />
                             <p className="font-mono text-sm tracking-widest uppercase opacity-50 text-center">NO HAY LEADS REGISTRADOS AÚN</p>
@@ -127,12 +128,12 @@ export default async function MatchesDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-black/10 dark:divide-white/10">
-                                    {topContacts.map((user) => (
+                                    {topEmpresas.map((user) => (
                                         <tr key={user.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
                                             <td className="px-4 py-4 w-1/3 align-top">
                                                 <div className="flex flex-col gap-1">
                                                     <span className="font-black text-xl uppercase tracking-tighter">{user.name}</span>
-                                                    <span className="text-[10px] font-mono tracking-widest uppercase opacity-50">{user.email || user.phone}</span>
+                                                    <span className="text-[10px] font-mono tracking-widest uppercase opacity-50">{user.company || '—'}</span>
                                                     {user.company && (
                                                         <span className="inline-block mt-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 text-[10px] font-bold uppercase tracking-widest w-fit border border-black/10 dark:border-white/10">
                                                             {user.company}
@@ -155,17 +156,11 @@ export default async function MatchesDashboard() {
                                                             {user.matches.map((match) => (
                                                                 <div key={match.id} className="flex items-center px-3 py-1.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                                                                     <div className="flex items-center gap-2">
-                                                                        {match.scanner ? (
-                                                                            <div className="w-6 h-6 bg-black dark:bg-white flex items-center justify-center text-[10px] font-bold text-white dark:text-black font-mono">
-                                                                                {match.scanner.name.charAt(0)}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="w-6 h-6 border border-black/20 dark:border-white/20 flex items-center justify-center text-[10px] font-bold opacity-50 font-mono">
-                                                                                ?
-                                                                            </div>
-                                                                        )}
+                                                                        <div className="w-6 h-6 border border-black/20 dark:border-white/20 flex items-center justify-center text-[10px] font-bold opacity-50 font-mono">
+                                                                            ?
+                                                                        </div>
                                                                         <span className="font-bold text-xs tracking-tight uppercase">
-                                                                            {match.scanner ? match.scanner.name : (match.scanner_phone || 'NO IDENTIFICADO')}
+                                                                            {match.candidato_phone || 'NO IDENTIFICADO'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
