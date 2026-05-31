@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutGrid, UserPlus, ShieldCheck, Activity, Building2 } from 'lucide-react'
+import { Home, LayoutGrid, UserPlus, Activity, Building2, Store } from 'lucide-react'
 
 const NAV_LINKS = [
     { href: '/', label: 'Check-in', icon: Home },
-    { href: '/admin', label: 'Candidatos', icon: LayoutGrid },
-    { href: '/admin/registro-manual', label: 'Registro', icon: UserPlus },
-    { href: '/admin/autoridades', label: 'Autoridades', icon: ShieldCheck },
+    { href: '/admin', label: 'Escaneos', icon: LayoutGrid },
+    { href: '/admin/empresas', label: 'Empresas', icon: Store },
+    { href: '/admin/registro-manual', label: 'Registro', icon: Building2 },
     { href: '/matches', label: 'Métricas', icon: Activity },
 ]
 

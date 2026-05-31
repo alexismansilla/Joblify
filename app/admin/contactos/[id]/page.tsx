@@ -75,7 +75,7 @@ export default function ContactCredentialPage({ params }: Props) {
             try {
                 const credentialImg = await generateCredentialImage({
                     name: contact!.name,
-                    company: (contact as any).company || ' ',
+                    company: contact!.company || ' ',
                     qrBase64: qrDataUrl,
                     includeQR
                 })
@@ -189,7 +189,7 @@ export default function ContactCredentialPage({ params }: Props) {
                                     <Hash className="w-3 h-3" /> RUT REGISTRADO
                                 </p>
                                 <p className="font-mono text-lg">
-                                    {(contact as any)?.rut || (contact as any)?.phone || contact?.email || '—'}
+                                    {contact?.rut || contact?.phone || contact?.email || '—'}
                                 </p>
                             </div>
                             <div className="space-y-2">
