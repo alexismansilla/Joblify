@@ -254,6 +254,8 @@ export async function createContact(formData: FormData) {
             experience_level,
             job_search_type,
             opportunity_description,
+            access_token: null,
+            plan: null,
         }])
         revalidatePath('/admin')
         // Retornamos el id para que el cliente pueda navegar directo a la credencial

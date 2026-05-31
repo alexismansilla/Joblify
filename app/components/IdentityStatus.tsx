@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { findContactByIdentifier } from '@/app/actions/contacts'
+import type { Contact } from '@/lib/services/contactService'
 import { User, LogOut, Loader2 } from 'lucide-react'
 import { Input } from './ui/Input'
 
 export default function IdentityStatus() {
-    const [user, setUser] = useState<any>(null)
+    const [user, setUser] = useState<Contact | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [identifier, setIdentifier] = useState('')
     const [checking, setChecking] = useState(false)
@@ -61,7 +62,7 @@ export default function IdentityStatus() {
                                         placeholder="Ej: 912345678"
                                         autoFocus
                                         value={identifier}
-                                        onChange={(e) => {
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             setIdentifier(e.target.value)
                                             setLoginError(false)
                                         }}

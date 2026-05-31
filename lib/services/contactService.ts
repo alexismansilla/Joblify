@@ -26,11 +26,18 @@ export interface Match {
     id: string;
     contact_id: string;
     scanner_id: string | null;
+    scanner_phone: string | null;
+    connection_type: string | null;
     created_at: string;
     scanner?: {
         id: string;
         name: string;
-    };
+        email: string | null;
+        phone: string | null;
+        profile: string | null;
+        experience_level: string | null;
+        job_search_type: string | null;
+    } | null;
 }
 
 export const contactService = {
@@ -77,7 +84,7 @@ export const contactService = {
         const from = (page - 1) * limit;
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, plan, access_token, created_at')
+            .select('*')
             .order('created_at', { ascending: false })
             .range(from, from + limit - 1);
 
@@ -90,7 +97,7 @@ export const contactService = {
         const q = query.trim();
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, qr_token, plan, access_token, created_at')
+            .select('*')
             .or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,rut.ilike.%${q}%,company.ilike.%${q}%,position.ilike.%${q}%`)
             .order('created_at', { ascending: false })
             .range(from, from + limit - 1);
@@ -122,23 +129,23 @@ export const contactService = {
     async getById(id: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
+            .select('*')
             .eq('id', id)
             .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return data as Contact | null;
     },
 
     async getByQrToken(qrToken: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
+            .select('*')
             .eq('qr_token', qrToken)
             .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return data as Contact | null;
     },
 
     async getByIdentifier(identifier: string) {
@@ -182,13 +189,13 @@ export const contactService = {
 
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, rut, company, position, profile, industry, qr_token')
+            .select('*')
             .or(orQueryString)
             .limit(1)
             .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return data as Contact | null;
     },
 
     async insertMany(contacts: Omit<Contact, 'id' | 'created_at' | 'qr_token'>[]) {
@@ -247,12 +254,12 @@ export const contactService = {
     async getByAccessToken(token: string) {
         const { data, error } = await supabase
             .from('contacts')
-            .select('id, name, first_name, last_name, email, phone, company, position, profile, industry, opportunity_description, plan, qr_token, access_token')
+            .select('*')
             .eq('access_token', token)
             .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return data as Contact | null;
     },
 
     async getLeadsForCompany(companyContactId: string) {

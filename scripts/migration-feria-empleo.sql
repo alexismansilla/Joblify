@@ -22,3 +22,21 @@ CREATE INDEX IF NOT EXISTS idx_contacts_access_token
 -- opportunity_description: texto libre (lo completa la empresa)
 -- access_token:        UUID generado por el sistema para el portal de empresa
 -- plan:                'free' | 'basic' | 'pro' | 'premium'
+
+-- job_search_type para empresas (qué tipo de búsqueda/búsqueda laboral ofrece la empresa)
+ALTER TABLE empresas
+  ADD COLUMN IF NOT EXISTS job_search_type TEXT;
+
+-- job_search_type values for companies:
+-- 'Trabajo full-time' | 'Trabajo part-time' | 'Práctica' | 'Freelance' | 'Todos los tipos'
+
+-- Columnas para capturar perfil del candidato al momento del escaneo QR
+ALTER TABLE matches
+  ADD COLUMN IF NOT EXISTS scanner_name              TEXT,
+  ADD COLUMN IF NOT EXISTS scanner_profile           TEXT,
+  ADD COLUMN IF NOT EXISTS scanner_experience_level  TEXT,
+  ADD COLUMN IF NOT EXISTS scanner_job_search_type   TEXT,
+  ADD COLUMN IF NOT EXISTS scanner_email             TEXT,
+  ADD COLUMN IF NOT EXISTS lead_status               TEXT DEFAULT 'pending';
+
+-- lead_status values: 'pending' | 'contacted' | 'highlighted' | 'dismissed'

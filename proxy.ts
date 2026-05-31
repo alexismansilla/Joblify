@@ -30,7 +30,10 @@ function requireBasicAuth(req: NextRequest): NextResponse | null {
     const basicAuth = req.headers.get('authorization')
 
     if (basicAuth?.startsWith('Basic ')) {
-        const [user, pwd] = atob(basicAuth.slice(6)).split(':')
+        const decoded = atob(basicAuth.slice(6))
+        const colonIdx = decoded.indexOf(':')
+        const user = decoded.slice(0, colonIdx)
+        const pwd = decoded.slice(colonIdx + 1)
         const validUser = process.env.ADMIN_USERNAME ?? 'x_connect_master77'
         const validPwd = process.env.ADMIN_PASSWORD ?? 'zQ#9mKdL!2vP$wN@xT'
 

@@ -117,6 +117,11 @@ export function mapRowToContact(raw: Record<string, string>) {
             raw['industria'] ||
             raw['industry'] ||
             null,
+        experience_level: null,
+        job_search_type: null,
+        opportunity_description: null,
+        access_token: null,
+        plan: null,
     }
 }
 
